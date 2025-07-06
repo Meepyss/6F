@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Fluxo de Caixa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="text-gray-700">
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a class="text-xl font-bold text-gray-800" href="./index.html">Painel Financeiro</a>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="./index.html" class="text-gray-600 hover:text-blue-500">Início</a>
+                    <a href="./contas_a_receber_dashboard.html" class="text-gray-600 hover:text-blue-500">Contas a Receber</a>
+                    <a href="./contas_a_pagar_dashboard.html" class="text-gray-600 hover:text-blue-500">Contas a Pagar</a>
+                    <a href="./fluxo_de_caixa_dashboard.html" class="text-gray-600 hover:text-blue-500 font-semibold text-blue-600">Fluxo de Caixa</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 md:p-6 lg:p-8">
+        <!-- Cabeçalho Principal -->
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Olá Adm, veja como está seu caixa!</h1>
+            <p class="text-gray-500">Visão geral do fluxo de caixa para o período selecionado.</p>
+        </header>
+
+        <!-- Painel de Filtros -->
+        <div class="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap items-center gap-4 lg:gap-8">
+            <!-- Filtro de Empresa -->
+            <div class="flex items-center gap-2">
+                <label for="company-filter" class="font-semibold text-sm">Empresa:</label>
+                <select id="company-filter" class="p-2 border border-gray-300 rounded-md shadow-sm">
+                    <option value="todos">Todas</option>
+                    <option value="Alpha">Grupo Alpha</option>
+                    <option value="Beta">Unidade Beta</option>
+                </select>
+            </div>
+            <!-- Filtro de Movimentações Internas -->
+            <div class="flex items-center gap-2">
+                <label for="internal-toggle" class="font-semibold text-sm">Incluir Mov. Internas:</label>
+                <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="internal-toggle" id="internal-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="internal-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer">
+                         <span class="toggle-ball absolute inset-y-0 left-0 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs e Alertas -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            <!-- KPIs -->
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6" id="kpi-container">
+                <!-- KPIs serão injetados aqui -->
+            </div>
+            <!-- Alertas -->
+            <div class="bg-white p-4 rounded-xl shadow-md flex flex-col gap-3" id="alerts-container">
+                 <h3 class="font-bold text-gray-800">Alertas Rápidos</h3>
+                 <!-- Alertas serão injetados aqui -->
+            </div>
+        </div>
+
+        <!-- Gráfico e Tabela -->
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+            <!-- Gráfico de Fluxo de Caixa -->
+            <div class="xl:col-span-3 bg-white p-6 rounded-xl shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-gray-800">Projeção de Saldo de Caixa</h3>
+                    <div id="projection-period-filter" class="flex items-center bg-gray-100 rounded-lg p-1">
+                        <button data-period="daily" class="filter-btn px-3 py-1 text-sm rounded-md">Diário</button>
+                        <button data-period="weekly" class="filter-btn active px-3 py-1 text-sm rounded-md">Semanal</button>
+                        <button data-period="monthly" class="filter-btn px-3 py-1 text-sm rounded-md">Mensal</button>
+                    </div>
+                </div>
+                <div class="h-[520px]">
+                    <canvas id="projected-balance-chart"></canvas>
+                </div>
+            </div>
+            <!-- Tabela Detalhada -->
+            <div class="xl:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                 <h3 class="font-bold text-lg text-gray-800 mb-4">Fluxo de Caixa: Previsto vs. Realizado</h3>
+                 <div class="mb-6 h-[200px]">
+                    <canvas id="cashflow-chart"></canvas>
+                 </div>
+                 <h3 class="font-bold text-lg text-gray-800 mb-4">Calendário Financeiro</h3>
+                 <div class="overflow-y-auto h-[300px]">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-gray-500 sticky top-0 bg-white">
+                            <tr>
+                                <th class="p-2">Data</th>
+                                <th class="p-2 text-right">A Receber</th>
+                                <th class="p-2 text-right">A Pagar</th>
+                                <th class="p-2 text-right">Saldo Dia</th>
+                                <th class="p-2 text-right">Acumulado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financial-calendar-body">
+                            <!-- Tabela será injetada aqui -->
+                        </tbody>
+                    </table>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+<script src="./assets/js/fluxo_de_caixa.js"></script>
+
+</body>
+</html>

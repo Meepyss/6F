@@ -1,0 +1,185 @@
+document.addEventListener('DOMContentLoaded', () => {
+    let agingChartInstance;
+
+    const createOrUpdateChart = (instance, chartDomElement, type, data, options) => {
+        if (instance) {
+            instance.destroy();
+        }
+        return new Chart(chartDomElement, { type, data, options });
+    };
+
+    const getMedian = (arr) => {
+        const mid = Math.floor(arr.length / 2);
+        const nums = [...arr].sort((a, b) => a - b);
+        return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+    };
+
+    const generateMockData = () => {
+        const data = [];
+        const today = new Date(2025, 6, 4);
+
+        // Archetypes
+        const archetypes = {
+            good: { count: 500, pmpRange: [5, 15], overdueRange: [500, 5000], totalValueRange: [10000, 50000] },
+            bigSlow: { count: 200, pmpRange: [30, 60], overdueRange: [10000, 30000], totalValueRange: [100000, 500000] },
+            problematic: { count: 150, pmpRange: [45, 90], overdueRange: [25000, 100000], totalValueRange: [50000, 200000] },
+            infrequent: { count: 350, pmpRange: [10, 40], overdueRange: [100, 2000], totalValueRange: [1000, 10000] }
+        };
+
+        let id = 1;
+        for (const type in archetypes) {
+            const config = archetypes[type];
+            for (let i = 0; i < config.count; i++) {
+                const fornecedor = `${type.charAt(0).toUpperCase() + type.slice(1)} Supplier ${i + 1}`;
+                const valorVencido = parseFloat((Math.random() * (config.overdueRange[1] - config.overdueRange[0]) + config.overdueRange[0]).toFixed(2));
+                const pmp = parseFloat((Math.random() * (config.pmpRange[1] - config.pmpRange[0]) + config.pmpRange[0]).toFixed(2));
+                const diasPonderados = valorVencido * pmp;
+                const valorTotal = parseFloat((Math.random() * (config.totalValueRange[1] - config.totalValueRange[0]) + config.totalValueRange[0]).toFixed(2));
+                const diasParaVencer = -Math.floor(pmp);
+
+                data.push({
+                    id: id++,
+                    fornecedor: fornecedor,
+                    documento: `DOC-${id}`,
+                    prefixo: "PAG",
+                    dataEmissao: new Date(today.getTime() - (diasParaVencer + 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    dataVencimento: new Date(today.getTime() - diasParaVencer * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    valorSaldo: valorVencido,
+                    grupoNatureza: "Compras",
+                    naturezaOperacao: "Matéria Prima",
+                    situacao: "Em Carteira",
+                    empresa: ["6F", "8F", "PEQUETITA"][id % 3],
+                    diasParaVencer: diasParaVencer,
+                    isInternal: false
+                });
+            }
+        }
+        return data;
+    };
+
+    const config = {
+        initialFilters: {
+            gruposNatureza: [],
+            situacoes: [],
+            fornecedores: [],
+            empresa: 'all',
+            includeInternal: false
+        },
+        dom: {
+            naturezaFilterContainer: document.getElementById('natureza-filter-container'),
+            situacaoFilterContainer: document.getElementById('situacao-filter-container'),
+            empresaFilter: document.getElementById('empresa-filter'),
+            internalToggle: document.getElementById('internal-toggle'),
+            kpiContainer: document.getElementById('kpi-container'),
+            agingChart: document.getElementById('aging-chart'),
+            detailedTableBody: document.getElementById('detailed-table-body'),
+            activeFiltersContainer: document.getElementById('active-filters-container'),
+            clearFiltersBtn: document.getElementById('clear-filters-btn'),
+            drilldownModal: document.getElementById('drilldown-modal'),
+            drilldownModalTitle: document.getElementById('drilldown-modal-title'),
+            drilldownModalCloseBtn: document.getElementById('drilldown-modal-close-btn'),
+            drilldownModalTableBody: document.getElementById('drilldown-modal-table-body'),
+            paginationControls: document.getElementById('pagination-controls'),
+        },
+        allEmpresas: ["8F", "6F", "PEQUETITA"],
+        allNaturezas: ["Impostos", "Compras", "Despesas com Pessoal", "Remuneração da Diretoria", "Despesas Comerciais", "Despesas Ocupação", "Outras Despesas", "Manutenção"],
+        allSituacoes: ["Descontado", "Vinculado", "Em Carteira", "Remessa Simples"],
+        filterPillDefinitions: [
+            { type: 'fornecedores', label: 'Fornecedor' },
+            { type: 'gruposNatureza', label: 'Natureza' },
+            { type: 'situacoes', label: 'Situação' },
+        ],
+        customSelects: [
+            { type: 'Grupos', options: ["Impostos", "Compras", "Despesas com Pessoal", "Remuneração da Diretoria", "Despesas Comerciais", "Despesas Ocupação", "Outras Despesas", "Manutenção"], filterKey: 'gruposNatureza', containerId: 'naturezaFilterContainer' },
+            { type: 'Situações', options: ["Descontado", "Vinculado", "Em Carteira", "Remessa Simples"], filterKey: 'situacoes', containerId: 'situacaoFilterContainer' },
+        ],
+        getFilteredData: (rawData, activeFilters) => {
+            return rawData.filter(item => {
+                const naturezaMatch = activeFilters.gruposNatureza.length === 0 || activeFilters.gruposNatureza.includes(item.grupoNatureza);
+                const situacaoMatch = activeFilters.situacoes.length === 0 || activeFilters.situacoes.includes(item.situacao);
+                const fornecedorMatch = activeFilters.fornecedores.length === 0 || activeFilters.fornecedores.includes(item.fornecedor);
+                const empresaMatch = activeFilters.empresa === 'all' || item.empresa === activeFilters.empresa;
+                const internalMatch = activeFilters.includeInternal || !item.isInternal;
+                return naturezaMatch && situacaoMatch && empresaMatch && fornecedorMatch && internalMatch;
+            });
+        },
+        renderTable: (data, app, tableBody) => {
+            const pageData = data.slice((app.currentPage - 1) * app.rowsPerPage, app.currentPage * app.rowsPerPage);
+            tableBody.innerHTML = '';
+            if (pageData.length === 0) {
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 10;
+                cell.className = 'p-8 text-center text-gray-500';
+                cell.textContent = 'Nenhum dado encontrado para os filtros selecionados.';
+                return;
+            }
+            pageData.forEach(d => {
+                const row = tableBody.insertRow();
+                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                row.insertCell().outerHTML = `<td class="p-3 cursor-pointer hover:text-blue-600" onclick="app.applyFilter('fornecedores', '${d.fornecedor}', event.ctrlKey)">${d.fornecedor}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3">${d.documento}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3">${d.prefixo}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3">${new Date(d.dataEmissao + 'T00:00:00').toLocaleDateString('pt-BR')}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3">${new Date(d.dataVencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3 text-right">${d.valorSaldo.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3 cursor-pointer hover:text-blue-600" onclick="app.applyFilter('gruposNatureza', '${d.grupoNatureza}', event.ctrlKey)">${d.grupoNatureza}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3">${d.naturezaOperacao}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3 cursor-pointer hover:text-blue-600" onclick="app.applyFilter('situacoes', '${d.situacao}', event.ctrlKey)">${d.situacao}</td>`;
+                row.insertCell().outerHTML = `<td class="p-3">${d.empresa}</td>`;
+            });
+        },
+        renderFunctions: [
+            function renderKPIs(data, app) {
+                const totalPagar = data.reduce((sum, d) => sum + d.valorSaldo, 0);
+                const totalVencido = data.filter(d => d.diasParaVencer < 0).reduce((sum, d) => sum + d.valorSaldo, 0);
+                const percVencido = totalPagar > 0 ? (totalVencido / totalPagar) * 100 : 0;
+                const pmpData = data.filter(d => d.diasParaVencer < 0);
+                const diasPonderados = pmpData.reduce((sum, d) => sum + (d.valorSaldo * Math.abs(d.diasParaVencer)), 0);
+                const pmp = totalVencido > 0 ? diasPonderados / totalVencido : 0;
+                const kpis = [
+                    { label: 'Valor Total a Pagar', value: totalPagar.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), color: 'text-blue-600' },
+                    { label: 'Valor Total Vencido', value: totalVencido.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), color: 'text-red-600' },
+                    { label: 'PMP (dias)', value: pmp.toFixed(1), color: 'text-orange-500' },
+                    { label: '% de Contas Vencidas', value: `${percVencido.toFixed(1)}%`, color: 'text-red-600' },
+                ];
+                app.config.dom.kpiContainer.innerHTML = kpis.map(kpi => `<div class="kpi-card"><p class="text-sm text-gray-500">${kpi.label}</p><p class="text-2xl font-bold ${kpi.color}">${kpi.value}</p></div>`).join('');
+            },
+            function renderAgingChart(data, app) {
+                const buckets = { vencido: 0, hoje: 0, dias7: 0, dias15: 0, dias30: 0, mais30: 0 };
+                data.forEach(d => {
+                    if (d.diasParaVencer < 0) buckets.vencido += d.valorSaldo;
+                    else if (d.diasParaVencer === 0) buckets.hoje += d.valorSaldo;
+                    else if (d.diasParaVencer <= 7) buckets.dias7 += d.valorSaldo;
+                    else if (d.diasParaVencer <= 15) buckets.dias15 += d.valorSaldo;
+                    else if (d.diasParaVencer <= 30) buckets.dias30 += d.valorSaldo;
+                    else buckets.mais30 += d.valorSaldo;
+                });
+                const chartData = { labels: ["Vencido", "Vence Hoje", "Vence em 7d", "Vence em 15d", "Vence em 30d", "Vence em +30d"], datasets: [{ label: 'Valor a Pagar', data: Object.values(buckets), backgroundColor: ['rgba(239, 68, 68, 1)', 'rgba(249, 115, 22, 1)', 'rgba(59, 130, 246, 1)', 'rgba(59, 130, 246, 1)', 'rgba(59, 130, 246, 1)', 'rgba(59, 130, 246, 1)'], }] };
+                const options = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: value => value.toLocaleString('pt-BR', {style:'currency', currency:'BRL'}) } } }, onClick: (event, elements) => { if (elements.length > 0) { const index = elements[0].index; const title = `Detalhes: ${chartData.labels[index]}`; const drilldownData = data.filter(d => { switch(index) { case 0: return d.diasParaVencer < 0; case 1: return d.diasParaVencer === 0; case 2: return d.diasParaVencer > 0 && d.diasParaVencer <= 7; case 3: return d.diasParaVencer > 7 && d.diasParaVencer <= 15; case 4: return d.diasParaVencer > 15 && d.diasParaVencer <= 30; case 5: return d.diasParaVencer > 30; } }); app.openDrillDownModal(title, drilldownData); } } };
+                agingChartInstance = createOrUpdateChart(agingChartInstance, app.config.dom.agingChart, 'bar', chartData, options);
+            },
+            function renderMainTable(data, app) {
+                app.config.renderTable(data, app, app.config.dom.detailedTableBody);
+            }
+        ],
+        setupEventListeners: (app) => {
+            app.config.dom.empresaFilter.addEventListener('change', e => { app.applyFilter('empresa', e.target.value); });
+            app.config.dom.internalToggle.addEventListener('change', e => { app.applyFilter('includeInternal', e.target.checked); });
+            app.config.dom.clearFiltersBtn.addEventListener('click', app.clearFilters);
+            app.config.dom.drilldownModalCloseBtn.addEventListener('click', app.closeDrillDownModal);
+            app.config.dom.drilldownModal.addEventListener('click', e => { if (e.target === app.config.dom.drilldownModal) app.closeDrillDownModal(); });
+            window.addEventListener('click', (e) => {
+                if (app.config.dom.naturezaFilterContainer && !app.config.dom.naturezaFilterContainer.contains(e.target)) {
+                    document.getElementById('Grupos-select-options')?.classList.remove('show');
+                }
+                if (app.config.dom.situacaoFilterContainer && !app.config.dom.situacaoFilterContainer.contains(e.target)) {
+                    document.getElementById('Situações-select-options')?.classList.remove('show');
+                }
+            });
+        }
+    };
+
+    const app = new DashboardApp(config);
+    app.init(generateMockData());
+});

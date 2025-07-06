@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle Financeiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Inter', sans-serif;
+        }
+        .dashboard-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a class="text-xl font-bold text-gray-800" href="./index.html">Painel Financeiro</a>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="./index.html" class="text-gray-600 hover:text-blue-500">Início</a>
+                    <a href="./contas_a_receber_dashboard.html" class="text-gray-600 hover:text-blue-500">Contas a Receber</a>
+                    <a href="./contas_a_pagar_dashboard.html" class="text-gray-600 hover:text-blue-500">Contas a Pagar</a>
+                    <a href="./fluxo_de_caixa_dashboard.html" class="text-gray-600 hover:text-blue-500">Fluxo de Caixa</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div class="container mx-auto p-8 text-center">
+            <header class="mb-12">
+                <h1 class="text-5xl font-bold text-gray-800">Bem-vindo ao Painel de Controle</h1>
+                <p class="text-xl text-gray-500 mt-2">Selecione um dashboard para começar a análise.</p>
+            </header>
+
+            <main class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Card Contas a Receber -->
+                <a href="./contas_a_receber_dashboard.html" class="dashboard-card bg-white p-8 rounded-xl shadow-md block">
+                    <div class="text-blue-500 mb-4">
+                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Contas a Receber</h2>
+                    <p class="text-gray-600">Análise detalhada da carteira de recebíveis, clientes e performance de cobrança.</p>
+                </a>
+
+                <!-- Card Contas a Pagar -->
+                <a href="./contas_a_pagar_dashboard.html" class="dashboard-card bg-white p-8 rounded-xl shadow-md block">
+                    <div class="text-red-500 mb-4">
+                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Contas a Pagar</h2>
+                    <p class="text-gray-600">Análise de fornecedores, projeção de vencimentos e otimização de pagamentos.</p>
+                </a>
+
+                <!-- Card Fluxo de Caixa -->
+                <a href="./fluxo_de_caixa_dashboard.html" class="dashboard-card bg-white p-8 rounded-xl shadow-md block">
+                    <div class="text-green-500 mb-4">
+                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Fluxo de Caixa</h2>
+                    <p class="text-gray-600">Visão geral do fluxo de caixa, projeções e calendário financeiro.</p>
+                </a>
+            </main>
+
+            <footer class="mt-16 text-gray-500">
+                <p>&copy; 2025 - Seu Painel Financeiro</p>
+            </footer>
+        </div>
+    </div>
+
+</body>
+</html>
