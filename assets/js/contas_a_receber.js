@@ -1,648 +1,691 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let paretoChartInstance;
-    let valorPorNaturezaChartInstance;
-
-    const createOrUpdateChart = (instance, chartDomElement, type, data, options) => {
-        if (instance) {
-            instance.destroy();
-        }
-        
-        // Remover todos os event listeners do canvas antes de recriar
-        if (chartDomElement && chartDomElement._contextMenuHandler) {
-            chartDomElement.removeEventListener('contextmenu', chartDomElement._contextMenuHandler);
-            delete chartDomElement._contextMenuHandler;
-        }
-        
-        if (chartDomElement) {
-            return new Chart(chartDomElement, { type, data, options });
-        }
+    // Variáveis globais para controle de gráficos
+    let evolucaoValoresChartInstance;
+    let valoresCategoriaChartInstance;
+    let dadosOriginais = {};
+    let filtroAtual = 'em-aberto';
+    let filtrosAtivos = {
+        natureza: [],
+        tipoCobranca: [],
+        empresa: [],
+        periodo: ''
     };
 
-    const generateMockData = () => {
-        const clientes = ["Supermercado Sol", "Hotel Palace", "Indústria Metalúrgica", "Comércio Varejista", "Boutique Elegance", "Restaurante Saboroso", "Construtora Build", "Hospital Saúde+", "Escola Aprender", "Tecnologia Avançada", "Agro Business", "Clínica Bem-Estar", "Rede de Farmácias", "Distribuidora de Alimentos", "Engenharia & Projetos"];
-        const tipos_cobranca = ["Descontado", "Cobrança Simples", "Vinculado"];
-        const naturezas = ["Vendas", "Serviços", "Locação", "Financeiro", "Outros"];
-        const empresas = ["6F", "8F", "PEQUETITA"];
-        const data = [];
-        const today = new Date(2025, 6, 4);
+    const formatarMoeda = (valor) => {
+        return valor.toLocaleString('pt-BR', { 
+            style: 'currency', 
+            currency: 'BRL',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
 
-        // Create Major Debtors
-        for (let i = 0; i < 5; i++) {
-            const valor_original = parseFloat((Math.random() * (250000 - 80000) + 80000).toFixed(2));
-            const vencimento = new Date(today.getTime());
-            vencimento.setDate(today.getDate() - (Math.floor(Math.random() * 60) + 30)); // 30-90 days overdue
-            data.push({
-                id: i + 1,
-                client: `Grande Devedor ${i + 1}`,
-                document: `NF-GD-${i + 1}`,
-                company: empresas[i % empresas.length],
-                tipoCobranca: tipos_cobranca[i % tipos_cobranca.length],
-                natureza: naturezas[i % naturezas.length],
-                emissionDate: new Date(vencimento.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                dueDate: vencimento.toISOString().split('T')[0],
-                valorOriginal: valor_original,
-                valorEmAberto: valor_original,
-                status: 'Vencido',
-                daysOverdue: Math.floor((today - vencimento) / (1000 * 60 * 60 * 24)),
-                isInternal: false,
-                compensatedBy: []
-            });
-        }
+    const calcularVariacao = (valorAtual, valorAnterior) => {
+        if (valorAnterior === 0) return { percentual: 0, tipo: 'neutral' };
+        const variacao = ((valorAtual - valorAnterior) / valorAnterior) * 100;
+        return { percentual: variacao, tipo: variacao > 0 ? 'positive' : variacao < 0 ? 'negative' : 'neutral' };
+    };
 
-        // Create other varied data
-        for (let i = 6; i <= 1200; i++) {
-            const client_base = clientes[i % clientes.length];
-            const client = `${client_base} - ${Math.floor(Math.random() * (999 - 100 + 1)) + 100}`;
-            const status = ["Aberto", "Vencido", "Compensado", "Pago Parcial"][i % 4];
-            const emissao_delta = Math.floor(Math.random() * (0 - -120 + 1)) + -120;
-            const emissao = new Date(today.getTime());
-            emissao.setDate(today.getDate() + emissao_delta);
-            const vencimento_delta = Math.floor(Math.random() * (75 - 15 + 1)) + 15;
-            const vencimento = new Date(emissao.getTime());
-            vencimento.setDate(emissao.getDate() + vencimento_delta);
-            const days_overdue = Math.floor((today - vencimento) / (1000 * 60 * 60 * 24));
+    const obterDadosCombinados = () => {
+        const emAberto = dadosOriginais.emAberto || [];
+        const recebidas = dadosOriginais.recebidas || [];
+        
+        const dadosCombinados = filtroAtual === 'em-aberto' ? emAberto :
+                               filtroAtual === 'recebidas' ? recebidas :
+                               [...emAberto, ...recebidas];
+        
+        return dadosCombinados;
+    };
 
-            const valor_original = parseFloat((Math.random() * (40000 - 500) + 500).toFixed(2));
-            let valor_em_aberto = 0;
-            if (status === "Aberto" || status === "Vencido") {
-                valor_em_aberto = valor_original;
-            } else if (status === "Pago Parcial") {
-                valor_em_aberto = parseFloat((Math.random() * (valor_original - 100) + 100).toFixed(2));
+    const obterValoresUnicos = (campo) => {
+        const dadosCombinados = obterDadosCombinados();
+        return [...new Set(dadosCombinados.map(item => item[campo]))].sort();
+    };
+
+    const criarDropdownFiltro = (containerId, opcoes, campo) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="custom-select relative">
+                <button type="button" class="custom-select-button">
+                    <span id="${containerId}-text">Todos</span>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div class="custom-select-options" id="${containerId}-options">
+                    ${opcoes.map(opcao => `
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2" value="${opcao}" onchange="handleCheckboxChange(event, '${campo}')">
+                            <span>${opcao}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Event listeners para o dropdown
+        const button = container.querySelector('.custom-select-button');
+        const options = container.querySelector('.custom-select-options');
+
+        button.addEventListener('click', () => {
+            options.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                options.classList.remove('show');
             }
-
-            data.push({
-                id: i,
-                client: client,
-                document: `NF-${Math.floor(Math.random() * (99999 - 20000 + 1)) + 20000}`,
-                company: empresas[i % empresas.length],
-                tipoCobranca: tipos_cobranca[i % tipos_cobranca.length],
-                natureza: naturezas[i % naturezas.length],
-                emissionDate: emissao.toISOString().split('T')[0],
-                dueDate: vencimento.toISOString().split('T')[0],
-                valorOriginal: valor_original,
-                valorEmAberto: valor_em_aberto,
-                status: status,
-                daysOverdue: days_overdue,
-                isInternal: Math.random() < 0.1,
-                compensatedBy: status === "Compensado" ? [`AD-${Math.floor(Math.random() * (999 - 100 + 1)) + 100}`] : []
-            });
-        }
-        console.log('Generated Mock Data for Contas a Receber:', data);
-        return data;
+        });
     };
 
-    const openClientStatementModal = (clientName, app) => {
-        const clientData = app.rawData.filter(d => d.client === clientName && d.status === 'Vencido');
-        const modal = app.config.dom.drilldownModal;
-        const modalTitle = app.config.dom.drilldownModalTitle;
-        const modalKpiContainer = app.config.dom.modalKpiContainer;
-        const modalTableBody = app.config.dom.drilldownModalTableBody;
+    const atualizarFiltro = (campo) => {
+        const opcoes = obterValoresUnicos(campo);
+        const containerId = campo === 'natureza' ? 'natureza-filter-container' :
+                           campo === 'tipoCobranca' ? 'cobranca-filter-container' :
+                           campo === 'empresa' ? 'company-filter-container' : '';
+        
+        if (containerId) {
+            criarDropdownFiltro(containerId, opcoes, campo);
+        }
+    };
 
-        if (!clientData.length) return;
+    const atualizarTextoDropdown = (container, campo) => {
+        const textElement = document.getElementById(`${container.id}-text`);
+        const selecionados = filtrosAtivos[campo];
+        
+        if (!textElement) return;
+        
+        if (selecionados.length === 0) {
+            textElement.textContent = 'Todos';
+        } else if (selecionados.length === 1) {
+            textElement.textContent = selecionados[0];
+        } else {
+            textElement.textContent = `${selecionados.length} selecionados`;
+        }
+    };
 
-        modalTitle.textContent = clientName;
+    const obterDadosFiltrados = () => {
+        let dados = obterDadosCombinados();
+        
+        // Aplicar filtros de checkbox
+        if (filtrosAtivos.natureza.length > 0) {
+            dados = dados.filter(item => filtrosAtivos.natureza.includes(item.natureza));
+        }
+        if (filtrosAtivos.tipoCobranca.length > 0) {
+            dados = dados.filter(item => filtrosAtivos.tipoCobranca.includes(item.tipoCobranca));
+        }
+        if (filtrosAtivos.empresa.length > 0) {
+            dados = dados.filter(item => filtrosAtivos.empresa.includes(item.empresa));
+        }
+        
+        // Aplicar filtro de período
+        if (filtrosAtivos.periodo) {
+            dados = dados.filter(item => item.periodo === filtrosAtivos.periodo);
+        }
+        
+        return dados;
+    };
 
-        const totalVencido = clientData.reduce((sum, d) => sum + d.valorEmAberto, 0);
-        const faturasVencidas = clientData.length;
-        const maxDiasAtraso = Math.max(...clientData.map(d => d.daysOverdue));
+    const alternarFiltro = (novoFiltro) => {
+        filtroAtual = novoFiltro;
+        
+        // Atualizar aparência dos botões
+        document.querySelectorAll('.filter-btn-abertas, .filter-btn-vencidas, .filter-btn-todas-receber').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const botaoClass = novoFiltro === 'em-aberto' ? 'filter-btn-abertas' :
+                          novoFiltro === 'recebidas' ? 'filter-btn-vencidas' :
+                          'filter-btn-todas-receber';
+        
+        document.querySelector(`.${botaoClass}`).classList.add('active');
+        
+        // Atualizar dropdowns com novos dados
+        atualizarFiltro('natureza');
+        atualizarFiltro('tipoCobranca');
+        atualizarFiltro('empresa');
+        
+        // Atualizar visualizações
+        atualizarVisualizacoes();
+    };
 
-        const kpis = [
-            { label: 'Valor Total Vencido', value: totalVencido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-red-600' },
-            { label: 'Faturas Vencidas', value: faturasVencidas, color: 'text-orange-600' },
-            { label: 'Maior Atraso (dias)', value: maxDiasAtraso, color: 'text-yellow-600' }
-        ];
-        modalKpiContainer.innerHTML = kpis.map(kpi => `<div class="kpi-card !p-4"><p class="text-sm text-gray-500">${kpi.label}</p><p class="text-xl font-bold ${kpi.color}">${kpi.value}</p></div>`).join('');
+    const criarGraficoEvolucao = () => {
+        const ctx = document.getElementById('evolucao-valores-chart');
+        if (!ctx) return;
 
-        modalTableBody.innerHTML = clientData.map(d => `
-            <tr class="border-b border-gray-200">
-                <td class="p-3">${d.document}</td>
-                <td class="p-3">${new Date(d.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td class="p-3 text-right">${d.daysOverdue}</td>
-                <td class="p-3 text-right font-semibold">${d.valorEmAberto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+        if (evolucaoValoresChartInstance) {
+            evolucaoValoresChartInstance.destroy();
+        }
+
+        const dadosFiltrados = obterDadosFiltrados();
+        
+        // Agrupar por período - ano atual
+        const dadosPorPeriodo2025 = {};
+        dadosFiltrados.forEach(item => {
+            const periodo = item.periodo;
+            if (!dadosPorPeriodo2025[periodo]) {
+                dadosPorPeriodo2025[periodo] = 0;
+            }
+            dadosPorPeriodo2025[periodo] += item.valor;
+        });
+
+        // Agrupar por período - ano anterior (2024)
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'recebidas' ? dadosOriginais.anoAnterior.recebidas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.recebidas];
+
+        const dadosPorPeriodo2024 = {};
+        dadosAnoAnterior.forEach(item => {
+            const periodo = item.periodo;
+            if (!dadosPorPeriodo2024[periodo]) {
+                dadosPorPeriodo2024[periodo] = 0;
+            }
+            dadosPorPeriodo2024[periodo] += item.valor;
+        });
+
+        // Preparar dados para o gráfico
+        const periodosAtuais = Object.keys(dadosPorPeriodo2025).sort();
+        const labels = periodosAtuais.map(p => {
+            const [ano, mes] = p.split('-');
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            return meses[parseInt(mes) - 1];
+        });
+        
+        const valores2025 = periodosAtuais.map(periodo => dadosPorPeriodo2025[periodo] || 0);
+        const valores2024 = periodosAtuais.map(periodo => {
+            const periodoAnterior = periodo.replace('2025', '2024');
+            return dadosPorPeriodo2024[periodoAnterior] || 0;
+        });
+
+        evolucaoValoresChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: '2025 (Atual)',
+                        data: valores2025,
+                        backgroundColor: '#003D75',
+                        borderColor: '#002a52',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: '2024 (Anterior)',
+                        data: valores2024,
+                        backgroundColor: '#A4C4E0',
+                        borderColor: '#8bb0d6',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 15, font: { size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatarMoeda(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatarMoeda(value);
+                            },
+                            font: { size: 10 }
+                        }
+                    },
+                    x: { ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    };
+
+    const criarGraficoCategorias = () => {
+        const ctx = document.getElementById('valores-categoria-chart');
+        if (!ctx) return;
+
+        if (valoresCategoriaChartInstance) {
+            valoresCategoriaChartInstance.destroy();
+        }
+
+        const dadosFiltrados = obterDadosFiltrados();
+        
+        // Agrupar por natureza - ano atual
+        const dadosPorNatureza2025 = {};
+        dadosFiltrados.forEach(item => {
+            const natureza = item.natureza;
+            if (!dadosPorNatureza2025[natureza]) {
+                dadosPorNatureza2025[natureza] = 0;
+            }
+            dadosPorNatureza2025[natureza] += item.valor;
+        });
+
+        // Agrupar por natureza - ano anterior
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'recebidas' ? dadosOriginais.anoAnterior.recebidas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.recebidas];
+
+        const dadosPorNatureza2024 = {};
+        dadosAnoAnterior.forEach(item => {
+            const natureza = item.natureza;
+            if (!dadosPorNatureza2024[natureza]) {
+                dadosPorNatureza2024[natureza] = 0;
+            }
+            dadosPorNatureza2024[natureza] += item.valor;
+        });
+
+        const labels = Object.keys(dadosPorNatureza2025);
+        const valores2025 = labels.map(label => dadosPorNatureza2025[label]);
+        const valores2024 = labels.map(label => dadosPorNatureza2024[label] || 0);
+
+        valoresCategoriaChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: '2025 (Atual)',
+                        data: valores2025,
+                        backgroundColor: '#003D75',
+                        borderColor: '#002a52',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '2024 (Anterior)',
+                        data: valores2024,
+                        backgroundColor: '#A4C4E0',
+                        borderColor: '#8bb0d6',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 15, font: { size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatarMoeda(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatarMoeda(value);
+                            },
+                            font: { size: 10 }
+                        }
+                    },
+                    x: { ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+    };
+
+    const popularTabela = () => {
+        const tableBody = document.getElementById('detailed-table-body');
+        if (!tableBody) return;
+
+        const dadosFiltrados = obterDadosFiltrados();
+        
+        // Agrupar dados por código e descrição (simulados)
+        const dadosAgrupados = {};
+        dadosFiltrados.forEach(item => {
+            const codigo = item.natureza === 'Vendas' ? '001' :
+                          item.natureza === 'Serviços' ? '002' :
+                          item.natureza === 'Locação' ? '003' :
+                          item.natureza === 'Financeiro' ? '004' : '005';
+            
+            const descricao = `Receita de ${item.natureza}`;
+            
+            if (!dadosAgrupados[codigo]) {
+                dadosAgrupados[codigo] = {
+                    codigo,
+                    descricao,
+                    valores: {}
+                };
+            }
+            
+            if (!dadosAgrupados[codigo].valores[item.periodo]) {
+                dadosAgrupados[codigo].valores[item.periodo] = 0;
+            }
+            dadosAgrupados[codigo].valores[item.periodo] += item.valor;
+        });
+
+        const meses = ['2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06'];
+        
+        tableBody.innerHTML = Object.values(dadosAgrupados).map(item => `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="p-2 text-center">${item.codigo}</td>
+                <td class="p-2">${item.descricao}</td>
+                ${meses.map(mes => `
+                    <td class="p-2 text-right text-xs">${formatarMoeda(item.valores[mes] || 0)}</td>
+                `).join('')}
             </tr>
         `).join('');
-
-        modal.classList.remove('hidden', 'opacity-0');
-        modal.querySelector('.modal-container').classList.add('scale-100');
     };
 
-    const config = {
-        initialFilters: {
-            companies: [],
-            customers: [],
-            statuses: [],
-            cobranca: [],
-            natureza: [],
-            includeInternal: false,
-            dateRange: 'all',
-        },
-        dom: {
-            dateRangeStart: document.getElementById('date-range-start'),
-            dateRangeEnd: document.getElementById('date-range-end'),
-            applyDateRange: document.getElementById('apply-date-range'),
-            clearDateFilter: document.getElementById('clear-date-filter'),
-            companyFilterContainer: document.getElementById('company-filter-container'),
-            statusFilterContainer: document.getElementById('status-filter-container'),
-            cobrancaFilterContainer: document.getElementById('cobranca-filter-container'),
-            naturezaFilterContainer: document.getElementById('natureza-filter-container'),
-            internalToggle: document.getElementById('internal-toggle'),
-            clearFiltersBtn: document.getElementById('clear-filters-btn'),
-            activeFiltersContainer: document.getElementById('active-filters-container'),
-            kpiContainer: document.getElementById('kpi-container'),
-            paretoChartCanvas: document.getElementById('pareto-chart-canvas'),
-            paretoChartTitle: document.getElementById('pareto-chart-title'),
-            valorPorNaturezaChart: document.getElementById('valor-por-natureza-chart'),
-            detailedTableBody: document.getElementById('detailed-table-body'),
-            paginationControls: document.getElementById('pagination-controls'),
-            drilldownModal: document.getElementById('client-statement-modal'),
-            drilldownModalTitle: document.getElementById('modal-client-name'),
-            modalKpiContainer: document.getElementById('modal-kpi-container'),
-            drilldownModalCloseBtn: document.getElementById('modal-close-btn'),
-            drilldownModalTableBody: document.getElementById('statement-table-body'),
-        },
-        allCompanies: ["8F", "6F", "PEQUETITA"],
-        allStatuses: ["Aberto", "Vencido", "Compensado", "Pago Parcial", "Acordo", "Adiantamento"],
-        filterPillDefinitions: [
-            { type: 'companies', label: 'Empresa' },
-            { type: 'customers', label: 'Cliente' },
-            { type: 'statuses', label: 'Status' },
-            { type: 'cobranca', label: 'Tipo Cobrança' },
-            { type: 'natureza', label: 'Natureza' },
-        ],
-        customSelects: [
-            { type: 'Empresas', options: ["8F", "6F", "PEQUETITA"], filterKey: 'companies', containerId: 'company-filter-container' },
-            { type: 'Status', options: ["Aberto", "Vencido", "Compensado", "Pago Parcial", "Acordo", "Adiantamento"], filterKey: 'statuses', containerId: 'status-filter-container' },
-            { type: 'Tipo Cobrança', options: ["Descontado", "Cobrança Simples", "Vinculado"], filterKey: 'cobranca', containerId: 'cobranca-filter-container' },
-            { type: 'Natureza', options: ["Vendas", "Serviços", "Locação", "Financeiro", "Outros"], filterKey: 'natureza', containerId: 'natureza-filter-container' },
-        ],
-        getFilteredData: (rawData, activeFilters) => {
-            return rawData.filter(item => {
-                const companyMatch = activeFilters.companies.length === 0 || activeFilters.companies.includes(item.company);
-                const customerMatch = activeFilters.customers.length === 0 || activeFilters.customers.includes(item.client);
-                const statusMatch = activeFilters.statuses.length === 0 || activeFilters.statuses.includes(item.status);
-                const internalMatch = activeFilters.includeInternal || !item.isInternal;
-                const cobrancaMatch = activeFilters.cobranca.length === 0 || activeFilters.cobranca.includes(item.tipoCobranca);
-                const naturezaMatch = activeFilters.natureza.length === 0 || activeFilters.natureza.includes(item.natureza);
-                let dateMatch = true;
-                if (activeFilters.dateRange !== 'all' && item.dueDate) {
-                    const [startDate, endDate] = activeFilters.dateRange.split('|');
-                    const itemDueDate = new Date(item.dueDate + 'T00:00:00');
+    const popularPainelLateral = () => {
+        const container = document.getElementById('transacoes-recentes-container');
+        if (!container) return;
 
-                    if (startDate && startDate !== 'null') {
-                        const filterStartDate = new Date(startDate + 'T00:00:00');
-                        dateMatch = dateMatch && itemDueDate >= filterStartDate;
-                    }
+        const dadosFiltrados = obterDadosFiltrados()
+            .filter(item => filtroAtual === 'todas' || (filtroAtual === 'recebidas' && item.status === 'Recebido'))
+            .slice(0, 15);
 
-                    if (endDate && endDate !== 'null') {
-                        const filterEndDate = new Date(endDate + 'T00:00:00');
-                        dateMatch = dateMatch && itemDueDate <= filterEndDate;
-                    }
-                }
-                return companyMatch && customerMatch && statusMatch && internalMatch && dateMatch && cobrancaMatch && naturezaMatch;
-            });
-        },
-        renderTable: (data, app, tableBody) => {
-            const pageData = data.slice((app.currentPage - 1) * app.rowsPerPage, app.currentPage * app.rowsPerPage);
-            tableBody.innerHTML = '';
-            if (pageData.length === 0) {
-                const row = tableBody.insertRow();
-                const cell = row.insertCell();
-                cell.colSpan = 9;
-                cell.className = 'p-6 text-center text-gray-500 text-sm';
-                cell.textContent = 'Nenhum registro encontrado.';
-                return;
-            }
-            pageData.forEach(item => {
-                const row = tableBody.insertRow();
-                row.className = 'border-b border-gray-100 hover:bg-blue-50 transition-colors';
-
-                // Cliente (truncado se muito longo)
-                const clienteTruncated = item.client.length > 25 ? item.client.substring(0, 25) + '...' : item.client;
-                row.insertCell().outerHTML = `<td class="p-2 cursor-pointer hover:text-blue-600 font-medium" onclick="app.applyFilter('customers', '${item.client}', event.ctrlKey)" title="${item.client}">${clienteTruncated}</td>`;
-
-                row.insertCell().outerHTML = `<td class="p-2 text-gray-600">${item.document}</td>`;
-                row.insertCell().outerHTML = `<td class="p-2 text-gray-600">${new Date(item.emissionDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</td>`;
-
-                // Vencimento com cor baseada no status
-                const vencimentoClass = item.status === 'Vencido' ? 'text-red-600 font-medium' : item.daysOverdue <= 7 && item.daysOverdue > 0 ? 'text-orange-600 font-medium' : 'text-gray-600';
-                const vencimentoText = item.dueDate ? new Date(item.dueDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'N/A';
-                row.insertCell().outerHTML = `<td class="p-2 ${vencimentoClass}">${vencimentoText}</td>`;
-
-                row.insertCell().outerHTML = `<td class="p-2 text-right text-gray-600">${item.valorOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
-                row.insertCell().outerHTML = `<td class="p-2 text-right font-medium text-gray-800">${item.valorEmAberto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
-
-                // Natureza (truncada)
-                const naturezaTruncated = item.natureza.length > 12 ? item.natureza.substring(0, 12) + '...' : item.natureza;
-                row.insertCell().outerHTML = `<td class="p-2 cursor-pointer hover:text-blue-600 text-gray-600" onclick="app.applyFilter('natureza', '${item.natureza}', event.ctrlKey)" title="${item.natureza}">${naturezaTruncated}</td>`;
-
-                const statusClass = item.status === 'Vencido' ? 'bg-red-100 text-red-800' : item.status === 'Pago Parcial' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800';
-                row.insertCell().outerHTML = `<td class="p-2"><span class="px-2 py-1 text-xs rounded-full cursor-pointer ${statusClass}" onclick="app.applyFilter('statuses', '${item.status}', event.ctrlKey)">${item.status}</span></td>`;
-
-                row.insertCell().outerHTML = `<td class="p-2 cursor-pointer hover:text-blue-600 text-gray-600" onclick="app.applyFilter('companies', '${item.company}', event.ctrlKey)">${item.company}</td>`;
-            });
-        },
-        renderFunctions: [
-            function renderKPIs(data, app) {
-                const totalReceber = data.filter(d => d.status !== 'Adiantamento').reduce((sum, d) => sum + d.valorEmAberto, 0);
-                const totalVencido = data.filter(d => d.status === 'Vencido').reduce((sum, d) => sum + d.valorEmAberto, 0);
-                const weightedSum = data.filter(d => d.daysOverdue > 0).reduce((sum, d) => sum + (d.valorEmAberto * d.daysOverdue), 0);
-                const pmr = totalVencido > 0 ? weightedSum / totalVencido : 0;
-                const inadimplencia = totalReceber > 0 ? (totalVencido / totalReceber) * 100 : 0;
-                const kpis = [
-                    { label: 'Valor Total a Receber', value: totalReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-blue-600' },
-                    { label: 'Valor Total Vencido', value: totalVencido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-red-600' },
-                    { label: 'PMR (dias)', value: pmr.toFixed(1), color: 'text-orange-600' },
-                    { label: '% de Inadimplência', value: `${inadimplencia.toFixed(2)}%`, color: 'text-red-700' }
-                ];
-                app.config.dom.kpiContainer.innerHTML = kpis.map(kpi => `
-                    <div class="bg-white rounded-lg shadow-sm border p-3">
-                        <p class="text-xs text-gray-500 mb-1">${kpi.label}</p>
-                        <p class="text-lg font-bold ${kpi.color}">${kpi.value}</p>
-                    </div>
-                `).join('');
-            },
-            function renderValorPorNaturezaChart(data, app) {
-                // Agrupar dados por natureza
-                const naturezaData = {};
-                data.forEach(d => {
-                    if (!naturezaData[d.natureza]) {
-                        naturezaData[d.natureza] = 0;
-                    }
-                    naturezaData[d.natureza] += d.valorEmAberto;
-                });
-
-                // Ordenar por valor (maior para menor)
-                const sortedNaturezas = Object.entries(naturezaData)
-                    .sort(([, a], [, b]) => b - a);
-
-                const labels = sortedNaturezas.map(([natureza]) => natureza);
-                const values = sortedNaturezas.map(([, valor]) => valor);
-
-                // Cores gradientes do maior para o menor
-                const colors = [
-                    'rgba(16, 185, 129, 0.8)',   // Verde (maior)
-                    'rgba(59, 130, 246, 0.8)',   // Azul
-                    'rgba(245, 158, 11, 0.8)',   // Amarelo
-                    'rgba(139, 92, 246, 0.8)',   // Roxo
-                    'rgba(236, 72, 153, 0.8)',   // Rosa
-                ];
-
-                const chartData = {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Valor Total',
-                        data: values,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderColor: colors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
-                        borderWidth: 1
-                    }]
-                };
-
-                const options = {
-                    indexAxis: 'y', // Barras horizontais
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false // Não mostrar legenda para gráfico simples
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return `${context.parsed.x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Valor (R$)'
-                            },
-                            beginAtZero: true,
-                            ticks: {
-                                callback: value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                            }
-                        },
-                        y: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Natureza'
-                            }
-                        }
-                    },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const natureza = labels[index];
-                            // Filtro cruzado: aplicar filtro ao clicar
-                            app.applyFilter('natureza', natureza, event.ctrlKey);
-                        }
-                    },
-                    onHover: (event, elements) => {
-                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
-                    }
-                };
-
-                // Criar nova função handler para drill-through
-                app.config.dom.valorPorNaturezaChart._contextMenuHandler = function (e) {
-                    e.preventDefault();
-                    const rect = this.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const points = valorPorNaturezaChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-
-                    if (points.length > 0) {
-                        const index = points[0].index;
-                        const natureza = labels[index];
-                        const drillData = data.filter(d => d.natureza === natureza);
-                        app.openDrillDownModal(`Drill Through - ${natureza}`, drillData);
-                    } else {
-                        // Se não clicou em uma barra específica, mostrar todos os dados filtrados
-                        app.openDrillDownModal('Drill Through - Todas as Contas por Natureza', data);
-                    }
-                };
-
-                // Adicionar evento de clique direito para drill-through
-                app.config.dom.valorPorNaturezaChart.addEventListener('contextmenu', app.config.dom.valorPorNaturezaChart._contextMenuHandler);
-
-                valorPorNaturezaChartInstance = createOrUpdateChart(valorPorNaturezaChartInstance, app.config.dom.valorPorNaturezaChart, 'bar', chartData, options);
-            },
-            function renderParetoChart(data, app) {
-        const allOverdue = data.filter(d => d.status === 'Vencido');
-        const totalOverdueAmount = allOverdue.reduce((sum, d) => sum + d.valorEmAberto, 0);
-
-        const devedores = allOverdue.reduce((acc, d) => {
-            if (!acc[d.client]) acc[d.client] = 0;
-            acc[d.client] += d.valorEmAberto;
-            return acc;
-        }, {});
-
-        const sortedDevedores = Object.entries(devedores).sort(([, a], [, b]) => b - a).slice(0, 10);
-
-        let cumulative = 0;
-        const cumulativePercentage = sortedDevedores.map(([, value]) => {
-            cumulative += value;
-            return (cumulative / totalOverdueAmount) * 100;
-        });
-
-        // Update chart title dynamically
-        const top10Total = sortedDevedores.reduce((sum, [, value]) => sum + value, 0);
-        const top10Percentage = totalOverdueAmount > 0 ? (top10Total / totalOverdueAmount) * 100 : 0;
-        if (app.config.dom.paretoChartTitle) {
-            app.config.dom.paretoChartTitle.textContent = `Top 10 Devedores Representam ${top10Percentage.toFixed(0)}% do Valor Total Vencido`;
-        }
-
-
-        const chartData = {
-            labels: sortedDevedores.map(([client]) => client),
-            datasets: [
-                {
-                    label: 'Valor Vencido',
-                    data: sortedDevedores.map(([, valor]) => valor),
-                    backgroundColor: 'rgba(59, 130, 246, 1)',
-                    yAxisID: 'y',
-                    order: 2 // Render bars first
-                },
-                {
-                    label: '% Acumulado',
-                    data: cumulativePercentage,
-                    type: 'line',
-                    borderColor: 'rgba(239, 68, 68, 1)',
-                    backgroundColor: 'transparent',
-                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
-                    pointRadius: 5,
-                    yAxisID: 'y1',
-                    order: 1 // Render line on top
-                }
-            ]
-        };
-
-        const options = {
-            responsive: true,
-            maintainAspectRatio: false,
-            onClick: (event, elements) => {
-                if (elements.length > 0) {
-                    const clientName = chartData.labels[elements[0].index];
-                    // Filtro cruzado: aplicar filtro de cliente ao clicar
-                    app.applyFilter('customers', clientName, event.ctrlKey);
-                }
-            },
-            onHover: (event, elements) => {
-                event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
-            },
-            scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    beginAtZero: true,
-                    title: { display: true, text: 'Valor Vencido (R$)' },
-                    ticks: { callback: value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    min: 0,
-                    max: 100,
-                    title: { display: true, text: '% Acumulado' },
-                    ticks: { callback: value => `${value.toFixed(0)}%` },
-                    grid: { drawOnChartArea: false }
-                }
-            },
-            plugins: {
-                datalabels: {
-                    display: (context) => {
-                        return context.dataset.type === 'line';
-                    },
-                    anchor: 'end',
-                    align: 'end',
-                    color: '#c026d3',
-                    font: {
-                        weight: 'bold'
-                    },
-                    formatter: (value) => {
-                        return `${value.toFixed(0)}%`;
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: function (context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.dataset.yAxisID === 'y1') {
-                                label += `${context.parsed.y.toFixed(2)}%`;
-                            } else {
-                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
-        };
-
-        // Criar nova função handler para drill-through
-        app.config.dom.paretoChartCanvas._contextMenuHandler = function (e) {
-            e.preventDefault();
-            const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const points = paretoChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-
-            if (points.length > 0) {
-                const index = points[0].index;
-                const clientName = chartData.labels[index];
-                const drillData = data.filter(d => d.client === clientName && d.status === 'Vencido');
-                app.openDrillDownModal(`Drill Through - ${clientName}`, drillData);
-            } else {
-                // Se não clicou em uma barra específica, mostrar todos os dados vencidos
-                const drillData = data.filter(d => d.status === 'Vencido');
-                app.openDrillDownModal('Drill Through - Todos os Devedores', drillData);
-            }
-        };
-
-        // Adicionar evento de clique direito para drill-through
-        app.config.dom.paretoChartCanvas.addEventListener('contextmenu', app.config.dom.paretoChartCanvas._contextMenuHandler);
-
-        paretoChartInstance = createOrUpdateChart(paretoChartInstance, app.config.dom.paretoChartCanvas, 'bar', chartData, options);
-    },
-    function renderMainTable(data, app) {
-        app.config.renderTable(data, app, app.config.dom.detailedTableBody);
-    }
-        ],
-    setupEventListeners: (app) => {
-        // Date range apply button
-        app.config.dom.applyDateRange.addEventListener('click', () => {
-            const startDate = app.config.dom.dateRangeStart.value || null;
-            const endDate = app.config.dom.dateRangeEnd.value || null;
-            const dateRange = `${startDate}|${endDate}`;
-            app.applyFilter('dateRange', dateRange);
-        });
-
-        // Clear date filter button
-        app.config.dom.clearDateFilter.addEventListener('click', () => {
-            app.config.dom.dateRangeStart.value = '';
-            app.config.dom.dateRangeEnd.value = '';
-            app.applyFilter('dateRange', 'all');
-        });
-
-        // Allow Enter key to apply date range
-        [app.config.dom.dateRangeStart, app.config.dom.dateRangeEnd].forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    app.config.dom.applyDateRange.click();
-                }
-            });
-        });
-
-        app.config.dom.internalToggle.addEventListener('change', e => { app.applyFilter('includeInternal', e.target.checked); });
-        app.config.dom.clearFiltersBtn.addEventListener('click', () => {
-            app.config.dom.dateRangeStart.value = '';
-            app.config.dom.dateRangeEnd.value = '';
-            app.clearFilters();
-        });
-        app.config.dom.drilldownModalCloseBtn.addEventListener('click', () => {
-            const modal = app.config.dom.drilldownModal;
-            modal.classList.add('opacity-0');
-            modal.querySelector('.modal-container').classList.remove('scale-100');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        });
-    }
-};
-
-    // Função para abrir modal de drill through
-    const openDrillThroughModal = (title, data, app) => {
-        const modal = app.config.dom.drilldownModal;
-        const modalTitle = app.config.dom.drilldownModalTitle;
-        const modalKpiContainer = app.config.dom.modalKpiContainer;
-        const modalTableBody = app.config.dom.drilldownModalTableBody;
-
-        modalTitle.textContent = title;
-
-        // Calcular KPIs dos dados do drill through
-        const totalValor = data.reduce((sum, d) => sum + d.valorEmAberto, 0);
-        const totalVencido = data.filter(d => d.status === 'Vencido').reduce((sum, d) => sum + d.valorEmAberto, 0);
-        const registros = data.length;
-
-        const kpis = [
-            { label: 'Total de Registros', value: registros, color: 'text-blue-600' },
-            { label: 'Valor Total', value: totalValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-green-600' },
-            { label: 'Valor Vencido', value: totalVencido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-red-600' }
-        ];
-
-        modalKpiContainer.innerHTML = kpis.map(kpi => `
-            <div class="kpi-card !p-4">
-                <p class="text-sm text-gray-500">${kpi.label}</p>
-                <p class="text-xl font-bold ${kpi.color}">${kpi.value}</p>
+        container.innerHTML = dadosFiltrados.map(item => `
+            <div class="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-xs font-medium text-gray-800">${item.cliente || 'Cliente'}</span>
+                    <span class="text-xs font-bold text-primary">${formatarMoeda(item.valor)}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">${item.documento || 'NF-' + Math.floor(Math.random() * 10000)}</span>
+                    <span class="text-xs text-gray-400">${item.empresa}</span>
+                </div>
             </div>
         `).join('');
-
-        // Renderizar tabela com todos os campos
-        modalTableBody.innerHTML = data.map(d => `
-            <tr class="border-b border-gray-200 hover:bg-gray-50">
-                <td class="p-3">${d.client}</td>
-                <td class="p-3">${d.document}</td>
-                <td class="p-3">${new Date(d.emissionDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td class="p-3">${new Date(d.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td class="p-3 text-right">${d.valorOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td class="p-3 text-right font-semibold">${d.valorEmAberto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td class="p-3">${d.natureza}</td>
-                <td class="p-3">
-                    <span class="px-2 py-1 text-xs rounded-full ${d.status === 'Vencido' ? 'bg-red-100 text-red-800' : d.status === 'Pago Parcial' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}">
-                        ${d.status}
-                    </span>
-                </td>
-                <td class="p-3">${d.company}</td>
-            </tr>
-        `).join('');
-
-        modal.classList.remove('hidden', 'opacity-0');
-        modal.querySelector('.modal-container').classList.add('scale-100');
     };
 
-    const app = new DashboardApp(config);
-    app.init(generateMockData());
+    const criarKPIs = () => {
+        const kpiContainer = document.getElementById('kpi-container');
+        if (!kpiContainer) return;
 
-    // Adicionar tooltips informativos para os gráficos
-    const addChartTooltips = () => {
-        const valorChart = document.getElementById('valor-por-natureza-chart');
-        const paretoChart = document.getElementById('pareto-chart-canvas');
+        const dadosFiltrados = obterDadosFiltrados();
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'recebidas' ? dadosOriginais.anoAnterior.recebidas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.recebidas];
 
-        if (valorChart) {
-            valorChart.title = 'Clique esquerdo: Filtrar por natureza | Clique direito: Ver detalhes';
-        }
+        const totalAtual = dadosFiltrados.reduce((sum, item) => sum + item.valor, 0);
+        const totalAnterior = dadosAnoAnterior.reduce((sum, item) => sum + item.valor, 0);
+        const quantidadeAtual = dadosFiltrados.length;
+        const quantidadeAnterior = dadosAnoAnterior.length;
+        const ticketMedioAtual = quantidadeAtual > 0 ? totalAtual / quantidadeAtual : 0;
+        const ticketMedioAnterior = quantidadeAnterior > 0 ? totalAnterior / quantidadeAnterior : 0;
 
-        if (paretoChart) {
-            paretoChart.title = 'Clique esquerdo: Filtrar por cliente | Clique direito: Ver detalhes';
+        const variacaoTotal = calcularVariacao(totalAtual, totalAnterior);
+        const variacaoQuantidade = calcularVariacao(quantidadeAtual, quantidadeAnterior);
+        const variacaoTicket = calcularVariacao(ticketMedioAtual, ticketMedioAnterior);
+
+        const tituloFiltro = filtroAtual === 'em-aberto' ? 'Em Aberto' :
+                            filtroAtual === 'recebidas' ? 'Recebidas' :
+                            'Total Geral';
+
+        const kpis = [
+            {
+                label: `Valor ${tituloFiltro}`,
+                value: formatarMoeda(totalAtual),
+                variacao: variacaoTotal,
+                icon: 'M12 4.5v15m7.5-7.5h-15',
+                status: 'success'
+            },
+            {
+                label: `Quantidade ${tituloFiltro}`,
+                value: quantidadeAtual.toLocaleString('pt-BR'),
+                variacao: variacaoQuantidade,
+                icon: 'M7 4V2C7 1.44772 7.44772 1 8 1H16C16.5523 1 17 1.44772 17 2V4H20C20.5523 4 21 4.44772 21 5S20.5523 6 20 6H19V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V6H4C3.44772 6 3 5.55228 3 5S3.44772 4 4 4H7Z',
+                status: 'info'
+            },
+            {
+                label: 'Ticket Médio',
+                value: formatarMoeda(ticketMedioAtual),
+                variacao: variacaoTicket,
+                icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+                status: 'primary'
+            },
+            {
+                label: 'Total Registros',
+                value: obterDadosCombinados().length.toLocaleString('pt-BR'),
+                icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+                status: 'neutral'
+            }
+        ];
+
+        kpiContainer.innerHTML = kpis.map(kpi => {
+            const variacaoHtml = kpi.variacao ? `
+                <div class="kpi-variation ${kpi.variacao.tipo}">
+                    <svg class="kpi-variation-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="${kpi.variacao.tipo === 'positive' ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 
+                                 kpi.variacao.tipo === 'negative' ? 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6' : 
+                                 'M9 12l2 2 4-4'}">
+                        </path>
+                    </svg>
+                    ${Math.abs(kpi.variacao.percentual).toFixed(1)}%
+                </div>
+            ` : '';
+
+            return `
+                <div class="kpi-modern kpi-status-${kpi.status}">
+                    <div class="kpi-header">
+                        <p class="kpi-label">${kpi.label}</p>
+                        <svg class="kpi-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${kpi.icon}"></path>
+                        </svg>
+                    </div>
+                    <p class="kpi-value">${kpi.value}</p>
+                    ${variacaoHtml}
+                </div>
+            `;
+        }).join('');
+
+        // Atualizar contador de registros
+        const totalRegistros = document.getElementById('total-registros');
+        if (totalRegistros) {
+            totalRegistros.textContent = `${dadosFiltrados.length} registros encontrados`;
         }
     };
 
-    // Adicionar indicadores visuais de interatividade
-    const addInteractivityIndicators = () => {
-        const charts = document.querySelectorAll('canvas');
-        charts.forEach(chart => {
-            chart.style.cursor = 'pointer';
-            chart.addEventListener('mouseenter', function () {
-                this.style.opacity = '0.9';
-            });
-            chart.addEventListener('mouseleave', function () {
-                this.style.opacity = '1';
-            });
+    const mostrarFiltrosAtivos = () => {
+        const container = document.getElementById('active-filters-container');
+        if (!container) return;
+
+        const pills = [];
+
+        // Pills para filtros de checkbox
+        Object.entries(filtrosAtivos).forEach(([tipo, valores]) => {
+            if (Array.isArray(valores) && valores.length > 0) {
+                valores.forEach(valor => {
+                    pills.push({
+                        tipo,
+                        valor,
+                        label: valor,
+                        classe: 'filter-pill'
+                    });
+                });
+            }
         });
+
+        // Pill para filtro de período
+        if (filtrosAtivos.periodo) {
+            const [ano, mes] = filtrosAtivos.periodo.split('-');
+            const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            pills.push({
+                tipo: 'periodo',
+                valor: filtrosAtivos.periodo,
+                label: `${meses[parseInt(mes) - 1]} ${ano}`,
+                classe: 'filter-pill'
+            });
+        }
+
+        container.innerHTML = pills.map(pill => `
+            <div class="${pill.classe}">
+                <span>${pill.label}</span>
+                <button onclick="removerFiltro('${pill.tipo}', '${pill.valor}')">&times;</button>
+            </div>
+        `).join('');
     };
 
-    // Executar após inicialização
-    setTimeout(() => {
-        addChartTooltips();
-        addInteractivityIndicators();
-    }, 100);
+    const atualizarVisualizacoes = () => {
+        criarKPIs();
+        criarGraficoEvolucao();
+        criarGraficoCategorias();
+        popularTabela();
+        popularPainelLateral();
+        mostrarFiltrosAtivos();
+    };
+
+    const inicializar = () => {
+        // Gerar dados mockados
+        dadosOriginais = gerarDadosMockados();
+        
+        // Configurar filtros de status
+        document.getElementById('filtro-abertas')?.addEventListener('click', () => alternarFiltro('em-aberto'));
+        document.getElementById('filtro-vencidas')?.addEventListener('click', () => alternarFiltro('recebidas'));
+        document.getElementById('filtro-todas-receber')?.addEventListener('click', () => alternarFiltro('todas'));
+
+        // Configurar filtro de período
+        document.getElementById('periodo-filter')?.addEventListener('change', (e) => {
+            filtrosAtivos.periodo = e.target.value;
+            atualizarVisualizacoes();
+        });
+
+        // Configurar botão limpar filtros
+        document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+            filtrosAtivos = { natureza: [], tipoCobranca: [], empresa: [], periodo: '' };
+            
+            // Limpar checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Limpar select de período
+            const periodoSelect = document.getElementById('periodo-filter');
+            if (periodoSelect) periodoSelect.value = '';
+            
+            // Atualizar textos dos dropdowns
+            ['natureza-filter-container', 'cobranca-filter-container', 'company-filter-container'].forEach(id => {
+                const container = document.getElementById(id);
+                if (container) atualizarTextoDropdown(container, id.split('-')[0]);
+            });
+            
+            atualizarVisualizacoes();
+        });
+
+        // Inicializar filtros
+        atualizarFiltro('natureza');
+        atualizarFiltro('tipoCobranca');
+        atualizarFiltro('empresa');
+        
+        // Renderizar visualizações iniciais
+        atualizarVisualizacoes();
+    };
+
+    // Funções globais para callbacks
+    window.handleCheckboxChange = (event, filterKey) => {
+        const value = event.target.value;
+        const isChecked = event.target.checked;
+        
+        if (isChecked) {
+            if (!filtrosAtivos[filterKey].includes(value)) {
+                filtrosAtivos[filterKey].push(value);
+            }
+        } else {
+            filtrosAtivos[filterKey] = filtrosAtivos[filterKey].filter(v => v !== value);
+        }
+        
+        // Atualizar texto do dropdown
+        const containerId = filterKey === 'natureza' ? 'natureza-filter-container' :
+                           filterKey === 'tipoCobranca' ? 'cobranca-filter-container' :
+                           filterKey === 'empresa' ? 'company-filter-container' : '';
+        
+        if (containerId) {
+            const container = document.getElementById(containerId);
+            if (container) atualizarTextoDropdown(container, filterKey);
+        }
+        
+        atualizarVisualizacoes();
+    };
+
+    window.removerFiltro = (tipo, valor) => {
+        if (tipo === 'periodo') {
+            filtrosAtivos.periodo = '';
+            const periodoSelect = document.getElementById('periodo-filter');
+            if (periodoSelect) periodoSelect.value = '';
+        } else if (Array.isArray(filtrosAtivos[tipo])) {
+            filtrosAtivos[tipo] = filtrosAtivos[tipo].filter(v => v !== valor);
+            
+            // Desmarcar checkbox correspondente
+            const checkbox = document.querySelector(`input[type="checkbox"][value="${valor}"]`);
+            if (checkbox) checkbox.checked = false;
+            
+            // Atualizar texto do dropdown
+            const containerId = tipo === 'natureza' ? 'natureza-filter-container' :
+                               tipo === 'tipoCobranca' ? 'cobranca-filter-container' :
+                               tipo === 'empresa' ? 'company-filter-container' : '';
+            
+            if (containerId) {
+                const container = document.getElementById(containerId);
+                if (container) atualizarTextoDropdown(container, tipo);
+            }
+        }
+        
+        atualizarVisualizacoes();
+    };
+
+    const gerarDadosMockados = () => {
+        const naturezas = ['Vendas', 'Serviços', 'Locação', 'Financeiro', 'Outros'];
+        const tiposCobranca = ['Descontado', 'Cobrança Simples', 'Vinculado'];
+        const empresas = ['6F', '8F', 'PEQUETITA'];
+        const periodos2025 = ['2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06'];
+        const periodos2024 = ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'];
+
+        const gerarTransacoes = (periodos, isAnoAnterior = false) => {
+            const transacoes = [];
+            periodos.forEach(periodo => {
+                naturezas.forEach(natureza => {
+                    empresas.forEach(empresa => {
+                        const quantidade = Math.floor(Math.random() * 5) + 1;
+                        for (let i = 0; i < quantidade; i++) {
+                            transacoes.push({
+                                periodo,
+                                natureza,
+                                tipoCobranca: tiposCobranca[Math.floor(Math.random() * tiposCobranca.length)],
+                                empresa,
+                                valor: parseFloat((Math.random() * 50000 + 5000).toFixed(2)),
+                                status: isAnoAnterior ? 'Recebido' : (Math.random() > 0.3 ? 'Em Aberto' : 'Recebido')
+                            });
+                        }
+                    });
+                });
+            });
+            return transacoes;
+        };
+
+        const transacoes2025 = gerarTransacoes(periodos2025);
+        const transacoes2024 = gerarTransacoes(periodos2024, true);
+
+        return {
+            emAberto: transacoes2025.filter(t => t.status === 'Em Aberto'),
+            recebidas: transacoes2025.filter(t => t.status === 'Recebido'),
+            anoAnterior: {
+                emAberto: transacoes2024.filter(t => t.status === 'Em Aberto'),
+                recebidas: transacoes2024.filter(t => t.status === 'Recebido')
+            }
+        };
+    };
+
+    // Inicializar quando o DOM estiver pronto
+    inicializar();
 });

@@ -1,499 +1,790 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let agingChartInstance;
-    let valorPorNaturezaChartInstance;
-
-    const createOrUpdateChart = (instance, chartDomElement, type, data, options) => {
-        if (instance) {
-            instance.destroy();
-        }
-
-        // Remover todos os event listeners do canvas antes de recriar
-        if (chartDomElement._contextMenuHandler) {
-            chartDomElement.removeEventListener('contextmenu', chartDomElement._contextMenuHandler);
-            delete chartDomElement._contextMenuHandler;
-        }
-
-        return new Chart(chartDomElement, { type, data, options });
+    let evolucaoValoresChartInstance;
+    let valoresCategoriaChartInstance;
+    let filtroAtual = 'em-aberto'; // 'em-aberto', 'pagas', 'todas'
+    let filtrosAtivos = {
+        natureza: [],
+        naturezaOperacao: [],
+        empresa: [],
+        periodo: ''
     };
 
-    const getMedian = (arr) => {
-        const mid = Math.floor(arr.length / 2);
-        const nums = [...arr].sort((a, b) => a - b);
-        return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+    // Dados simulados expandidos com categorias e comparação ano anterior
+    const dadosOriginais = {
+        // Contas em aberto (a pagar) - 2025
+        emAberto: [
+            { codigo: '106', descricao: 'MATÉRIA PRIMA SANTOS', valor: 815673.74, vencimento: '2025-07-15', status: 'Em Aberto', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '6F', periodo: '2025-07', ano: 2025 },
+            { codigo: '208', descricao: 'COMISSÕES GERAIS', valor: 238548.12, vencimento: '2025-07-20', status: 'Em Aberto', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Comissões', empresa: '8F', periodo: '2025-07', ano: 2025 },
+            { codigo: '310', descricao: 'ENERGIA ELÉTRICA', valor: 89345.67, vencimento: '2025-07-10', status: 'Em Aberto', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Energia Elétrica', empresa: '6F', periodo: '2025-07', ano: 2025 },
+            { codigo: '411', descricao: 'DÍVIDA E VENDAS', valor: 324786.88, vencimento: '2025-07-25', status: 'Em Aberto', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Vendas', empresa: '9F', periodo: '2025-07', ano: 2025 },
+            { codigo: '512', descricao: 'SALÁRIOS E ORDENADOS', valor: 567891.23, vencimento: '2025-07-05', status: 'Em Aberto', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Salários', empresa: '6F', periodo: '2025-07', ano: 2025 },
+            { codigo: '613', descricao: 'FRETES E CARRETOS DIVERSOS', valor: 156739.94, vencimento: '2025-07-18', status: 'Em Aberto', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Fretes', empresa: '8F', periodo: '2025-07', ano: 2025 },
+            { codigo: '714', descricao: 'PRÊMIOS PAGOS', valor: 89654.32, vencimento: '2025-07-12', status: 'Em Aberto', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Prêmios', empresa: '9F', periodo: '2025-07', ano: 2025 },
+            { codigo: '815', descricao: 'GASTOS DE FABRICAÇÃO', valor: 456123.78, vencimento: '2025-07-08', status: 'Em Aberto', grupoNatureza: 'Compras', naturezaOperacao: 'Material Fabricação', empresa: '6F', periodo: '2025-07', ano: 2025 },
+            // Dados para agosto 2025
+            { codigo: '116', descricao: 'MATÉRIA PRIMA FORTALEZA', valor: 654321.98, vencimento: '2025-08-15', status: 'Em Aberto', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '8F', periodo: '2025-08', ano: 2025 },
+            { codigo: '217', descricao: 'TELECOMUNICAÇÕES', valor: 45678.90, vencimento: '2025-08-10', status: 'Em Aberto', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Telefone', empresa: '6F', periodo: '2025-08', ano: 2025 },
+            { codigo: '318', descricao: 'ALUGUEL ESCRITÓRIO', valor: 123456.78, vencimento: '2025-08-05', status: 'Em Aberto', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Aluguel', empresa: '9F', periodo: '2025-08', ano: 2025 },
+            { codigo: '419', descricao: 'IMPOSTOS FEDERAIS', valor: 789012.34, vencimento: '2025-08-20', status: 'Em Aberto', grupoNatureza: 'Impostos', naturezaOperacao: 'Impostos Federais', empresa: '6F', periodo: '2025-08', ano: 2025 }
+        ],
+        
+        // Contas pagas - 2025
+        pagas: [
+            { codigo: '106', descricao: 'MATÉRIA PRIMA SANTOS', valor: 789234.56, dataPagamento: '2025-06-28', status: 'Pago', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '6F', periodo: '2025-06', ano: 2025 },
+            { codigo: '208', descricao: 'COMISSÕES GERAIS', valor: 267891.23, dataPagamento: '2025-06-27', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Comissões', empresa: '8F', periodo: '2025-06', ano: 2025 },
+            { codigo: '310', descricao: 'ENERGIA ELÉTRICA', valor: 87654.32, dataPagamento: '2025-06-26', status: 'Pago', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Energia Elétrica', empresa: '6F', periodo: '2025-06', ano: 2025 },
+            { codigo: '411', descricao: 'DÍVIDA E VENDAS', valor: 298765.43, dataPagamento: '2025-06-25', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Vendas', empresa: '9F', periodo: '2025-06', ano: 2025 },
+            { codigo: '512', descricao: 'SALÁRIOS E ORDENADOS', valor: 592345.67, dataPagamento: '2025-06-24', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Salários', empresa: '6F', periodo: '2025-06', ano: 2025 },
+            { codigo: '613', descricao: 'FRETES E CARRETOS DIVERSOS', valor: 163456.78, dataPagamento: '2025-06-23', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Fretes', empresa: '8F', periodo: '2025-06', ano: 2025 },
+            { codigo: '714', descricao: 'PRÊMIOS PAGOS', valor: 96234.56, dataPagamento: '2025-06-22', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Prêmios', empresa: '9F', periodo: '2025-06', ano: 2025 },
+            { codigo: '815', descricao: 'GASTOS DE FABRICAÇÃO', valor: 489123.45, dataPagamento: '2025-06-21', status: 'Pago', grupoNatureza: 'Compras', naturezaOperacao: 'Material Fabricação', empresa: '6F', periodo: '2025-06', ano: 2025 },
+            // Mais registros para outros períodos de 2025
+            { codigo: '120', descricao: 'IMPOSTOS ESTADUAIS', valor: 234567.89, dataPagamento: '2025-05-28', status: 'Pago', grupoNatureza: 'Impostos', naturezaOperacao: 'Impostos Estaduais', empresa: '8F', periodo: '2025-05', ano: 2025 },
+            { codigo: '221', descricao: 'MANUTENÇÃO EQUIPAMENTOS', valor: 345678.90, dataPagamento: '2025-05-25', status: 'Pago', grupoNatureza: 'Manutenção', naturezaOperacao: 'Manutenção Equipamentos', empresa: '6F', periodo: '2025-05', ano: 2025 },
+            { codigo: '322', descricao: 'MATERIAL DE ESCRITÓRIO', valor: 56789.01, dataPagamento: '2025-05-20', status: 'Pago', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Material Escritório', empresa: '9F', periodo: '2025-05', ano: 2025 },
+            { codigo: '423', descricao: 'ENCARGOS SOCIAIS', valor: 456789.12, dataPagamento: '2025-05-15', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Encargos Sociais', empresa: '6F', periodo: '2025-05', ano: 2025 }
+        ],
+
+        // Dados do ano anterior (2024) para comparação
+        anoAnterior: {
+            pagas: [
+                // Jun 2024
+                { codigo: '106', descricao: 'MATÉRIA PRIMA SANTOS', valor: 720000.00, dataPagamento: '2024-06-28', status: 'Pago', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '6F', periodo: '2024-06', ano: 2024 },
+                { codigo: '208', descricao: 'COMISSÕES GERAIS', valor: 245000.00, dataPagamento: '2024-06-27', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Comissões', empresa: '8F', periodo: '2024-06', ano: 2024 },
+                { codigo: '310', descricao: 'ENERGIA ELÉTRICA', valor: 82000.00, dataPagamento: '2024-06-26', status: 'Pago', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Energia Elétrica', empresa: '6F', periodo: '2024-06', ano: 2024 },
+                { codigo: '411', descricao: 'DÍVIDA E VENDAS', valor: 275000.00, dataPagamento: '2024-06-25', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Vendas', empresa: '9F', periodo: '2024-06', ano: 2024 },
+                { codigo: '512', descricao: 'SALÁRIOS E ORDENADOS', valor: 540000.00, dataPagamento: '2024-06-24', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Salários', empresa: '6F', periodo: '2024-06', ano: 2024 },
+                { codigo: '613', descricao: 'FRETES E CARRETOS DIVERSOS', valor: 150000.00, dataPagamento: '2024-06-23', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Fretes', empresa: '8F', periodo: '2024-06', ano: 2024 },
+                { codigo: '714', descricao: 'PRÊMIOS PAGOS', valor: 88000.00, dataPagamento: '2024-06-22', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Prêmios', empresa: '9F', periodo: '2024-06', ano: 2024 },
+                { codigo: '815', descricao: 'GASTOS DE FABRICAÇÃO', valor: 445000.00, dataPagamento: '2024-06-21', status: 'Pago', grupoNatureza: 'Compras', naturezaOperacao: 'Material Fabricação', empresa: '6F', periodo: '2024-06', ano: 2024 },
+                
+                // Mai 2024
+                { codigo: '120', descricao: 'IMPOSTOS ESTADUAIS', valor: 210000.00, dataPagamento: '2024-05-28', status: 'Pago', grupoNatureza: 'Impostos', naturezaOperacao: 'Impostos Estaduais', empresa: '8F', periodo: '2024-05', ano: 2024 },
+                { codigo: '221', descricao: 'MANUTENÇÃO EQUIPAMENTOS', valor: 320000.00, dataPagamento: '2024-05-25', status: 'Pago', grupoNatureza: 'Manutenção', naturezaOperacao: 'Manutenção Equipamentos', empresa: '6F', periodo: '2024-05', ano: 2024 },
+                { codigo: '322', descricao: 'MATERIAL DE ESCRITÓRIO', valor: 52000.00, dataPagamento: '2024-05-20', status: 'Pago', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Material Escritório', empresa: '9F', periodo: '2024-05', ano: 2024 },
+                { codigo: '423', descricao: 'ENCARGOS SOCIAIS', valor: 420000.00, dataPagamento: '2024-05-15', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Encargos Sociais', empresa: '6F', periodo: '2024-05', ano: 2024 },
+
+                // Dados adicionais para outros meses de 2024
+                { codigo: '001', descricao: 'MATÉRIA PRIMA SANTOS', valor: 680000.00, dataPagamento: '2024-04-28', status: 'Pago', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '6F', periodo: '2024-04', ano: 2024 },
+                { codigo: '002', descricao: 'COMISSÕES GERAIS', valor: 220000.00, dataPagamento: '2024-04-27', status: 'Pago', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Comissões', empresa: '8F', periodo: '2024-04', ano: 2024 },
+                { codigo: '003', descricao: 'ENERGIA ELÉTRICA', valor: 78000.00, dataPagamento: '2024-03-26', status: 'Pago', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Energia Elétrica', empresa: '6F', periodo: '2024-03', ano: 2024 },
+                { codigo: '004', descricao: 'SALÁRIOS E ORDENADOS', valor: 500000.00, dataPagamento: '2024-02-24', status: 'Pago', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Salários', empresa: '6F', periodo: '2024-02', ano: 2024 },
+                { codigo: '005', descricao: 'GASTOS DE FABRICAÇÃO', valor: 400000.00, dataPagamento: '2024-01-21', status: 'Pago', grupoNatureza: 'Compras', naturezaOperacao: 'Material Fabricação', empresa: '6F', periodo: '2024-01', ano: 2024 }
+            ],
+            emAberto: [
+                // Jul 2024 (dados históricos como se fossem "em aberto" na época)
+                { codigo: '506', descricao: 'MATÉRIA PRIMA SANTOS', valor: 750000.00, vencimento: '2024-07-15', status: 'Em Aberto', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '6F', periodo: '2024-07', ano: 2024 },
+                { codigo: '507', descricao: 'COMISSÕES GERAIS', valor: 220000.00, vencimento: '2024-07-20', status: 'Em Aberto', grupoNatureza: 'Despesas Comerciais', naturezaOperacao: 'Comissões', empresa: '8F', periodo: '2024-07', ano: 2024 },
+                { codigo: '508', descricao: 'ENERGIA ELÉTRICA', valor: 85000.00, vencimento: '2024-07-10', status: 'Em Aberto', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Energia Elétrica', empresa: '6F', periodo: '2024-07', ano: 2024 },
+                { codigo: '509', descricao: 'SALÁRIOS E ORDENADOS', valor: 520000.00, vencimento: '2024-07-05', status: 'Em Aberto', grupoNatureza: 'Despesas com Pessoal', naturezaOperacao: 'Salários', empresa: '6F', periodo: '2024-07', ano: 2024 },
+                
+                // Ago 2024
+                { codigo: '510', descricao: 'MATÉRIA PRIMA FORTALEZA', valor: 600000.00, vencimento: '2024-08-15', status: 'Em Aberto', grupoNatureza: 'Compras', naturezaOperacao: 'Matéria Prima', empresa: '8F', periodo: '2024-08', ano: 2024 },
+                { codigo: '511', descricao: 'TELECOMUNICAÇÕES', valor: 42000.00, vencimento: '2024-08-10', status: 'Em Aberto', grupoNatureza: 'Despesas Ocupação', naturezaOperacao: 'Telefone', empresa: '6F', periodo: '2024-08', ano: 2024 },
+                { codigo: '512', descricao: 'IMPOSTOS FEDERAIS', valor: 720000.00, vencimento: '2024-08-20', status: 'Em Aberto', grupoNatureza: 'Impostos', naturezaOperacao: 'Impostos Federais', empresa: '6F', periodo: '2024-08', ano: 2024 }
+            ]
+        }
     };
 
-    const generateMockData = () => {
-        const data = [];
-        const today = new Date(2025, 6, 4);
+    // Dados para evolução mensal (por período) incluindo ano anterior
+    const dadosEvolucaoPorPeriodo = {
+        '2024-01': 1200000,
+        '2024-02': 1800000,
+        '2024-03': 2300000,
+        '2024-04': 2850000,
+        '2024-05': 3100000,
+        '2024-06': 3200000,
+        '2024-07': 2180000,
+        '2024-08': 1650000,
+        '2025-01': 3200000,
+        '2025-02': 3523236,
+        '2025-03': 4159838,
+        '2025-04': 3432847,
+        '2025-05': 4058127,
+        '2025-06': 3568932,
+        '2025-07': 2500000,
+        '2025-08': 1800000
+    };
 
-        const gruposNatureza = ["Impostos", "Compras", "Despesas com Pessoal", "Remuneração da Diretoria", "Despesas Comerciais", "Despesas Ocupação", "Outras Despesas", "Manutenção"];
-        const naturezasOperacao = ["Matéria Prima", "Serviços Terceiros", "Energia Elétrica", "Telefone", "Aluguel", "Salários", "Encargos Sociais", "Impostos Federais", "Impostos Estaduais", "Impostos Municipais", "Manutenção Equipamentos", "Material de Escritório"];
+    // Função para formatar valores monetários
+    const formatarMoeda = (valor) => {
+        if (!valor && valor !== 0) return 'R$ 0,00';
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    };
 
+    // Função para calcular variação percentual
+    const calcularVariacao = (valorAtual, valorAnterior) => {
+        if (!valorAnterior || valorAnterior === 0) return null;
+        return ((valorAtual - valorAnterior) / valorAnterior * 100);
+    };
 
-        // Archetypes
-        const archetypes = {
-            good: { count: 500, pmpRange: [5, 15], overdueRange: [500, 5000], totalValueRange: [10000, 50000] },
-            bigSlow: { count: 200, pmpRange: [30, 60], overdueRange: [10000, 30000], totalValueRange: [100000, 500000] },
-            problematic: { count: 150, pmpRange: [45, 90], overdueRange: [25000, 100000], totalValueRange: [50000, 200000] },
-            infrequent: { count: 350, pmpRange: [10, 40], overdueRange: [100, 2000], totalValueRange: [1000, 10000] }
+    // Função para obter dados combinados (incluindo ano anterior)
+    const obterDadosCombinados = () => {
+        const dadosAtuais = filtroAtual === 'em-aberto' ? dadosOriginais.emAberto :
+                           filtroAtual === 'pagas' ? dadosOriginais.pagas :
+                           [...dadosOriginais.emAberto, ...dadosOriginais.pagas];
+        
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'pagas' ? dadosOriginais.anoAnterior.pagas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.pagas];
+
+        return {
+            atual: dadosAtuais,
+            anterior: dadosAnoAnterior
         };
-
-        let id = 1;
-        for (const type in archetypes) {
-            const config = archetypes[type];
-            for (let i = 0; i < config.count; i++) {
-                const fornecedor = `${type.charAt(0).toUpperCase() + type.slice(1)} Supplier ${i + 1}`;
-                const valorSaldo = parseFloat((Math.random() * (config.totalValueRange[1] - config.totalValueRange[0]) + config.totalValueRange[0]).toFixed(2));
-
-                // Modified logic to create varied due dates
-                const diasParaVencer = Math.floor(Math.random() * 120) - 30; // Range from -30 to +90 days
-
-                data.push({
-                    id: id++,
-                    fornecedor: fornecedor,
-                    documento: `DOC-${id}`,
-                    prefixo: "PAG",
-                    dataEmissao: new Date(today.getTime() - (diasParaVencer + 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    dataVencimento: new Date(today.getTime() + diasParaVencer * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    valorSaldo: valorSaldo,
-                    grupoNatureza: gruposNatureza[id % gruposNatureza.length],
-                    naturezaOperacao: naturezasOperacao[id % naturezasOperacao.length],
-
-                    empresa: ["6F", "8F", "PEQUETITA"][id % 3],
-                    diasParaVencer: diasParaVencer,
-                    isInternal: false
-                });
-            }
-        }
-        return data;
     };
 
-    const config = {
-        initialFilters: {
-            gruposNatureza: [],
-            naturezasOperacao: [],
-            fornecedores: [],
-            empresas: [],
-            includeInternal: false
-        },
-        dom: {
-            naturezaFilterContainer: document.getElementById('natureza-filter-container'),
-            naturezaOperacaoFilterContainer: document.getElementById('natureza-operacao-filter-container'),
+    // Função para obter valores únicos para filtros
+    const obterValoresUnicos = (campo) => {
+        const todosOsDados = [...dadosOriginais.emAberto, ...dadosOriginais.pagas];
+        return [...new Set(todosOsDados.map(item => item[campo]))].sort();
+    };
 
-            empresaFilterContainer: document.getElementById('empresa-filter-container'),
-            internalToggle: document.getElementById('internal-toggle'),
-            kpiContainer: document.getElementById('kpi-container'),
-            agingChart: document.getElementById('aging-chart'),
-            valorPorNaturezaChart: document.getElementById('valor-por-natureza-chart'),
-            detailedTableBody: document.getElementById('detailed-table-body'),
-            activeFiltersContainer: document.getElementById('active-filters-container'),
-            clearFiltersBtn: document.getElementById('clear-filters-btn'),
-            drilldownModal: document.getElementById('drilldown-modal'),
-            drilldownModalTitle: document.getElementById('drilldown-modal-title'),
-            drilldownModalCloseBtn: document.getElementById('drilldown-modal-close-btn'),
-            drilldownModalTableBody: document.getElementById('drilldown-modal-table-body'),
-            paginationControls: document.getElementById('pagination-controls'),
-        },
-        allEmpresas: ["8F", "6F", "PEQUETITA"],
-        allNaturezas: ["Impostos", "Compras", "Despesas com Pessoal", "Remuneração da Diretoria", "Despesas Comerciais", "Despesas Ocupação", "Outras Despesas", "Manutenção"],
-        allNaturezasOperacao: ["Matéria Prima", "Serviços Terceiros", "Energia Elétrica", "Telefone", "Aluguel", "Salários", "Encargos Sociais", "Impostos Federais", "Impostos Estaduais", "Impostos Municipais", "Manutenção Equipamentos", "Material de Escritório"],
+    // Função para criar dropdowns de filtro
+    const criarDropdownFiltro = (containerId, opcoes, campo) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-        filterPillDefinitions: [
-            { type: 'fornecedores', label: 'Fornecedor' },
-            { type: 'gruposNatureza', label: 'Grupo Natureza' },
-            { type: 'naturezasOperacao', label: 'Natureza Operação' },
+        container.innerHTML = `
+            <div class="custom-select-button text-xs border border-gray-300 rounded-md p-2 cursor-pointer">
+                <span class="select-text">Todos</span>
+                <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div class="custom-select-options">
+                ${opcoes.map(opcao => `
+                    <label class="text-xs">
+                        <input type="checkbox" value="${opcao}" data-campo="${campo}"> ${opcao}
+                    </label>
+                `).join('')}
+            </div>
+        `;
 
-            { type: 'empresas', label: 'Empresa' },
-        ],
-        customSelects: [
-            { type: 'Grupos Natureza', options: ["Impostos", "Compras", "Despesas com Pessoal", "Remuneração da Diretoria", "Despesas Comerciais", "Despesas Ocupação", "Outras Despesas", "Manutenção"], filterKey: 'gruposNatureza', containerId: 'natureza-filter-container' },
-            { type: 'Naturezas Operação', options: ["Matéria Prima", "Serviços Terceiros", "Energia Elétrica", "Telefone", "Aluguel", "Salários", "Encargos Sociais", "Impostos Federais", "Impostos Estaduais", "Impostos Municipais", "Manutenção Equipamentos", "Material de Escritório"], filterKey: 'naturezasOperacao', containerId: 'natureza-operacao-filter-container' },
+        // Event listeners
+        const button = container.querySelector('.custom-select-button');
+        const options = container.querySelector('.custom-select-options');
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
 
-            { type: 'Empresas', options: ["8F", "6F", "PEQUETITA"], filterKey: 'empresas', containerId: 'empresa-filter-container' },
-        ],
-        getFilteredData: (rawData, activeFilters) => {
-            return rawData.filter(item => {
-                const naturezaMatch = activeFilters.gruposNatureza.length === 0 || activeFilters.gruposNatureza.includes(item.grupoNatureza);
-                const naturezaOperacaoMatch = activeFilters.naturezasOperacao.length === 0 || activeFilters.naturezasOperacao.includes(item.naturezaOperacao);
+        button.addEventListener('click', () => {
+            options.classList.toggle('show');
+        });
 
-                const fornecedorMatch = activeFilters.fornecedores.length === 0 || activeFilters.fornecedores.includes(item.fornecedor);
-                const empresaMatch = activeFilters.empresas.length === 0 || activeFilters.empresas.includes(item.empresa);
-                const internalMatch = activeFilters.includeInternal || !item.isInternal;
-                return naturezaMatch && naturezaOperacaoMatch && empresaMatch && fornecedorMatch && internalMatch;
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                atualizarFiltro(campo);
+                atualizarTextoDropdown(container, campo);
+                atualizarVisualizacoes();
             });
-        },
-        renderTable: (data, app, tableBody) => {
-            const pageData = data.slice((app.currentPage - 1) * app.rowsPerPage, app.currentPage * app.rowsPerPage);
-            tableBody.innerHTML = '';
-            if (pageData.length === 0) {
-                const row = tableBody.insertRow();
-                const cell = row.insertCell();
-                cell.colSpan = 7;
-                cell.className = 'p-6 text-center text-gray-500 text-sm';
-                cell.textContent = 'Nenhum dado encontrado para os filtros selecionados.';
-                return;
+        });
+
+        // Fechar dropdown ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                options.classList.remove('show');
             }
-            pageData.forEach(d => {
-                const row = tableBody.insertRow();
-                row.className = 'border-b border-gray-100 hover:bg-blue-50 transition-colors';
+        });
+    };
 
-                // Fornecedor (truncado se muito longo)
-                const fornecedorTruncated = d.fornecedor.length > 25 ? d.fornecedor.substring(0, 25) + '...' : d.fornecedor;
-                row.insertCell().outerHTML = `<td class="p-2 cursor-pointer hover:text-blue-600 font-medium" onclick="app.applyFilter('fornecedores', '${d.fornecedor}', event.ctrlKey)" title="${d.fornecedor}">${fornecedorTruncated}</td>`;
+    // Função para atualizar filtro
+    const atualizarFiltro = (campo) => {
+        const checkboxes = document.querySelectorAll(`input[data-campo="${campo}"]:checked`);
+        filtrosAtivos[campo] = Array.from(checkboxes).map(cb => cb.value);
+    };
 
-                row.insertCell().outerHTML = `<td class="p-2 text-gray-600">${d.documento}</td>`;
-                row.insertCell().outerHTML = `<td class="p-2 text-gray-600">${new Date(d.dataEmissao + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</td>`;
+    // Função para atualizar texto do dropdown
+    const atualizarTextoDropdown = (container, campo) => {
+        const selectText = container.querySelector('.select-text');
+        const selecionados = filtrosAtivos[campo];
+        
+        if (selecionados.length === 0) {
+            selectText.textContent = 'Todos';
+        } else if (selecionados.length === 1) {
+            selectText.textContent = selecionados[0];
+        } else {
+            selectText.textContent = `${selecionados.length} selecionados`;
+        }
+    };
 
-                // Vencimento com cor baseada no status
-                const vencimentoClass = d.diasParaVencer < 0 ? 'text-red-600 font-medium' : d.diasParaVencer <= 7 ? 'text-orange-600 font-medium' : 'text-gray-600';
-                row.insertCell().outerHTML = `<td class="p-2 ${vencimentoClass}">${new Date(d.dataVencimento + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</td>`;
+    // Função para obter dados filtrados (apenas ano atual)
+    const obterDadosFiltrados = () => {
+        let dados;
+        
+        // Filtro de status primeiro
+        switch (filtroAtual) {
+            case 'em-aberto':
+                dados = [...dadosOriginais.emAberto];
+                break;
+            case 'pagas':
+                dados = [...dadosOriginais.pagas];
+                break;
+            case 'todas':
+                dados = [...dadosOriginais.emAberto, ...dadosOriginais.pagas];
+                break;
+            default:
+                dados = [...dadosOriginais.emAberto];
+        }
 
-                row.insertCell().outerHTML = `<td class="p-2 text-right font-medium text-gray-800">${d.valorSaldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
+        // Aplicar outros filtros
+        if (filtrosAtivos.natureza.length > 0) {
+            dados = dados.filter(item => filtrosAtivos.natureza.includes(item.grupoNatureza));
+        }
+        
+        if (filtrosAtivos.naturezaOperacao.length > 0) {
+            dados = dados.filter(item => filtrosAtivos.naturezaOperacao.includes(item.naturezaOperacao));
+        }
+        
+        if (filtrosAtivos.empresa.length > 0) {
+            dados = dados.filter(item => filtrosAtivos.empresa.includes(item.empresa));
+        }
+        
+        if (filtrosAtivos.periodo) {
+            dados = dados.filter(item => item.periodo === filtrosAtivos.periodo);
+        }
 
-                // Natureza (truncada)
-                const naturezaTruncated = d.grupoNatureza.length > 15 ? d.grupoNatureza.substring(0, 15) + '...' : d.grupoNatureza;
-                row.insertCell().outerHTML = `<td class="p-2 cursor-pointer hover:text-blue-600 text-gray-600" onclick="app.applyFilter('gruposNatureza', '${d.grupoNatureza}', event.ctrlKey)" title="${d.grupoNatureza}">${naturezaTruncated}</td>`;
+        return dados;
+    };
 
-                row.insertCell().outerHTML = `<td class="p-2 cursor-pointer hover:text-blue-600 text-gray-600" onclick="app.applyFilter('empresas', '${d.empresa}', event.ctrlKey)">${d.empresa}</td>`;
-            });
-        },
-        renderFunctions: [
-            function renderKPIs(data, app) {
-                const totalPagar = data.reduce((sum, d) => sum + d.valorSaldo, 0);
-                const totalVencido = data.filter(d => d.diasParaVencer < 0).reduce((sum, d) => sum + d.valorSaldo, 0);
-                const percVencido = totalPagar > 0 ? (totalVencido / totalPagar) * 100 : 0;
-                const pmpData = data.filter(d => d.diasParaVencer < 0);
-                const diasPonderados = pmpData.reduce((sum, d) => sum + (d.valorSaldo * Math.abs(d.diasParaVencer)), 0);
-                const pmp = totalVencido > 0 ? diasPonderados / totalVencido : 0;
-                const kpis = [
-                    { label: 'Valor Total a Pagar', value: totalPagar.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-blue-600' },
-                    { label: 'Valor Total Vencido', value: totalVencido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), color: 'text-red-600' },
-                    { label: 'PMP (dias)', value: pmp.toFixed(1), color: 'text-orange-500' },
-                    { label: '% de Contas Vencidas', value: `${percVencido.toFixed(1)}%`, color: 'text-red-600' },
-                ];
-                app.config.dom.kpiContainer.innerHTML = kpis.map(kpi => `
-                    <div class="bg-white rounded-lg shadow-sm border p-3">
-                        <p class="text-xs text-gray-500 mb-1">${kpi.label}</p>
-                        <p class="text-lg font-bold ${kpi.color}">${kpi.value}</p>
-                    </div>
-                `).join('');
-            },
-            function renderValorPorNaturezaChart(data, app) {
-                // Agrupar dados por natureza
-                const naturezaData = {};
-                data.forEach(d => {
-                    if (!naturezaData[d.grupoNatureza]) {
-                        naturezaData[d.grupoNatureza] = 0;
+    // Função para alternar filtro de status
+    const alternarFiltro = (novoFiltro) => {
+        filtroAtual = novoFiltro;
+        
+        // Resetar todos os botões para estado padrão
+        document.querySelectorAll('[id^="filtro-"]').forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('text-gray-600');
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+        });
+        
+        // Aplicar classe ativa para o botão selecionado
+        const btnAtivo = document.getElementById(`filtro-${novoFiltro}`);
+        if (btnAtivo) {
+            btnAtivo.classList.remove('text-gray-600');
+            btnAtivo.classList.add('active');
+            // As cores são aplicadas via CSS usando a classe 'active'
+        }
+
+        atualizarVisualizacoes();
+    };
+
+    // Função para criar gráfico de evolução com comparação ano anterior
+    const criarGraficoEvolucao = () => {
+        const ctx = document.getElementById('evolucao-valores-chart');
+        if (!ctx) return;
+
+        if (evolucaoValoresChartInstance) {
+            evolucaoValoresChartInstance.destroy();
+        }
+
+        const dadosFiltrados = obterDadosFiltrados();
+        
+        // Agrupar por período - ano atual
+        const dadosPorPeriodo2025 = {};
+        dadosFiltrados.forEach(item => {
+            const periodo = item.periodo;
+            if (!dadosPorPeriodo2025[periodo]) {
+                dadosPorPeriodo2025[periodo] = 0;
+            }
+            dadosPorPeriodo2025[periodo] += item.valor;
+        });
+
+        // Agrupar por período - ano anterior (2024)
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'pagas' ? dadosOriginais.anoAnterior.pagas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.pagas];
+
+        const dadosPorPeriodo2024 = {};
+        dadosAnoAnterior.forEach(item => {
+            const periodo = item.periodo;
+            if (!dadosPorPeriodo2024[periodo]) {
+                dadosPorPeriodo2024[periodo] = 0;
+            }
+            dadosPorPeriodo2024[periodo] += item.valor;
+        });
+
+        // Preparar dados para o gráfico
+        const periodosAtuais = Object.keys(dadosPorPeriodo2025).sort();
+        const labels = periodosAtuais.map(p => {
+            const [ano, mes] = p.split('-');
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            return meses[parseInt(mes) - 1];
+        });
+        
+        const valores2025 = periodosAtuais.map(periodo => dadosPorPeriodo2025[periodo] || 0);
+        const valores2024 = periodosAtuais.map(periodo => {
+            const periodoAnterior = periodo.replace('2025', '2024');
+            return dadosPorPeriodo2024[periodoAnterior] || 0;
+        });
+
+        evolucaoValoresChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: '2025 (Atual)',
+                        data: valores2025,
+                        backgroundColor: '#003D75',
+                        borderColor: '#002a52',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: '2024 (Anterior)',
+                        data: valores2024,
+                        backgroundColor: '#A4C4E0',
+                        borderColor: '#8bb0d6',
+                        borderWidth: 1,
+                        borderRadius: 4,
                     }
-                    naturezaData[d.grupoNatureza] += d.valorSaldo;
-                });
-
-                // Ordenar por valor (maior para menor)
-                const sortedNaturezas = Object.entries(naturezaData)
-                    .sort(([, a], [, b]) => b - a);
-
-                const labels = sortedNaturezas.map(([natureza]) => natureza);
-                const values = sortedNaturezas.map(([, valor]) => valor);
-
-                // Cores gradientes do maior para o menor
-                const colors = [
-                    'rgba(239, 68, 68, 0.8)',    // Vermelho (maior)
-                    'rgba(245, 158, 11, 0.8)',   // Amarelo
-                    'rgba(59, 130, 246, 0.8)',   // Azul
-                    'rgba(16, 185, 129, 0.8)',   // Verde
-                    'rgba(139, 92, 246, 0.8)',   // Roxo
-                    'rgba(236, 72, 153, 0.8)',   // Rosa
-                    'rgba(34, 197, 94, 0.8)',    // Verde claro
-                    'rgba(251, 146, 60, 0.8)'    // Laranja
-                ];
-
-                const chartData = {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Valor Total',
-                        data: values,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderColor: colors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
-                        borderWidth: 1
-                    }]
-                };
-
-                const options = {
-                    indexAxis: 'y', // Barras horizontais
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false // Não mostrar legenda para gráfico simples
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return `${context.parsed.x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const valor = formatarMoeda(context.parsed.y);
+                                const index = context.dataIndex;
+                                const valorAtual = valores2025[index];
+                                const valorAnterior = valores2024[index];
+                                const variacao = calcularVariacao(valorAtual, valorAnterior);
+                                
+                                let tooltip = `${context.dataset.label}: ${valor}`;
+                                if (variacao !== null && context.dataset.label.includes('2025')) {
+                                    const sinal = variacao >= 0 ? '+' : '';
+                                    tooltip += ` (${sinal}${variacao.toFixed(1)}% vs 2024)`;
                                 }
+                                return tooltip;
                             }
                         }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Valor (R$)'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
                             },
-                            beginAtZero: true,
-                            ticks: {
-                                callback: value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                            }
+                            color: '#6b7280'
                         },
-                        y: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Natureza'
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        ticks: { color: '#6b7280' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    };
+
+    // Função para criar gráfico de categorias com comparação
+    const criarGraficoCategorias = () => {
+        const ctx = document.getElementById('valores-categoria-chart');
+        if (!ctx) return;
+
+        if (valoresCategoriaChartInstance) {
+            valoresCategoriaChartInstance.destroy();
+        }
+
+        const dadosFiltrados = obterDadosFiltrados();
+        
+        // Agrupar por grupo natureza - ano atual
+        const dadosPorNatureza2025 = {};
+        dadosFiltrados.forEach(item => {
+            const natureza = item.grupoNatureza;
+            if (!dadosPorNatureza2025[natureza]) {
+                dadosPorNatureza2025[natureza] = 0;
+            }
+            dadosPorNatureza2025[natureza] += item.valor;
+        });
+
+        // Agrupar por grupo natureza - ano anterior
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'pagas' ? dadosOriginais.anoAnterior.pagas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.pagas];
+
+        const dadosPorNatureza2024 = {};
+        dadosAnoAnterior.forEach(item => {
+            const natureza = item.grupoNatureza;
+            if (!dadosPorNatureza2024[natureza]) {
+                dadosPorNatureza2024[natureza] = 0;
+            }
+            dadosPorNatureza2024[natureza] += item.valor;
+        });
+
+        const labels = Object.keys(dadosPorNatureza2025);
+        const valores2025 = labels.map(label => dadosPorNatureza2025[label]);
+        const valores2024 = labels.map(label => dadosPorNatureza2024[label] || 0);
+
+        valoresCategoriaChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: '2025 (Atual)',
+                        data: valores2025,
+                        backgroundColor: '#003D75',
+                        borderColor: '#002a52',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '2024 (Anterior)',
+                        data: valores2024,
+                        backgroundColor: '#A4C4E0',
+                        borderColor: '#8bb0d6',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const valor = formatarMoeda(context.parsed.x);
+                                const index = context.dataIndex;
+                                const valorAtual = valores2025[index];
+                                const valorAnterior = valores2024[index];
+                                const variacao = calcularVariacao(valorAtual, valorAnterior);
+                                
+                                let tooltip = `${context.dataset.label}: ${valor}`;
+                                if (variacao !== null && context.dataset.label.includes('2025')) {
+                                    const sinal = variacao >= 0 ? '+' : '';
+                                    tooltip += ` (${sinal}${variacao.toFixed(1)}% vs 2024)`;
+                                }
+                                return tooltip;
                             }
                         }
-                    },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            const natureza = labels[index];
-                            // Filtro cruzado: aplicar filtro ao clicar
-                            app.applyFilter('gruposNatureza', natureza, event.ctrlKey);
-                        }
-                    },
-                    onHover: (event, elements) => {
-                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
                     }
-                };
-
-                // Criar nova função handler para drill-through
-                app.config.dom.valorPorNaturezaChart._contextMenuHandler = function (e) {
-                    e.preventDefault();
-                    const rect = this.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const points = valorPorNaturezaChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-
-                    if (points.length > 0) {
-                        const index = points[0].index;
-                        const natureza = labels[index];
-                        const drillData = data.filter(d => d.grupoNatureza === natureza);
-                        app.openDrillDownModal(`Drill Through - ${natureza}`, drillData);
-                    } else {
-                        // Se não clicou em uma barra específica, mostrar todos os dados filtrados
-                        app.openDrillDownModal('Drill Through - Todas as Contas por Natureza', data);
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
+                            },
+                            color: '#6b7280'
+                        },
+                        grid: { color: '#f3f4f6' }
+                    },
+                    y: {
+                        ticks: { color: '#6b7280', font: { size: 10 } },
+                        grid: { display: false }
                     }
-                };
+                }
+            }
+        });
+    };
 
-                // Adicionar evento de clique direito para drill-through
-                app.config.dom.valorPorNaturezaChart.addEventListener('contextmenu', app.config.dom.valorPorNaturezaChart._contextMenuHandler);
+    // Função para popular tabela (usa dados filtrados)
+    const popularTabela = () => {
+        const tbody = document.getElementById('detailed-table-body');
+        if (!tbody) return;
 
-                valorPorNaturezaChartInstance = createOrUpdateChart(valorPorNaturezaChartInstance, app.config.dom.valorPorNaturezaChart, 'bar', chartData, options);
+        tbody.innerHTML = '';
+        const dadosFiltrados = obterDadosFiltrados();
+
+        dadosFiltrados.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-100 hover:bg-gray-50 text-gray-700';
+            
+            let statusClass = 'bg-gray-100 text-gray-800';
+            if (row.status === 'Pago') {
+                statusClass = 'bg-green-100 text-green-800';
+            } else if (row.status === 'Em Aberto') {
+                statusClass = 'bg-red-100 text-red-800';
+            }
+            
+            const dataFormatada = row.vencimento ? 
+                new Date(row.vencimento).toLocaleDateString('pt-BR') :
+                new Date(row.dataPagamento).toLocaleDateString('pt-BR');
+            
+            tr.innerHTML = `
+                <td class="p-2 font-mono text-xs">${row.codigo}</td>
+                <td class="p-2 text-xs font-medium">${row.descricao}</td>
+                <td class="p-2 text-right text-xs font-mono">${formatarMoeda(row.valor)}</td>
+                <td class="p-2 text-xs">${dataFormatada}</td>
+                <td class="p-2 text-xs">${row.grupoNatureza}</td>
+                <td class="p-2 text-xs">${row.empresa}</td>
+                <td class="p-2 text-xs"><span class="px-2 py-1 ${statusClass} rounded-full text-xs">${row.status}</span></td>
+            `;
+            
+            tbody.appendChild(tr);
+        });
+
+        // Atualizar cabeçalho da tabela
+        const thead = tbody.parentElement.querySelector('thead tr');
+        if (thead) {
+            thead.innerHTML = `
+                <th class="p-2 text-left font-medium w-16">Código</th>
+                <th class="p-2 text-left font-medium min-w-[200px]">Descrição</th>
+                <th class="p-2 text-right font-medium w-32">Valor</th>
+                <th class="p-2 text-left font-medium w-24">Data</th>
+                <th class="p-2 text-left font-medium w-32">Natureza</th>
+                <th class="p-2 text-left font-medium w-20">Empresa</th>
+                <th class="p-2 text-left font-medium w-24">Status</th>
+            `;
+        }
+    };
+
+    // Função para popular painel lateral (sempre mostra pagas)
+    const popularPainelLateral = () => {
+        const container = document.getElementById('transacoes-recentes-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        dadosOriginais.pagas.slice(0, 5).forEach(transacao => {
+            const item = document.createElement('div');
+            item.className = 'p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer';
+            
+            item.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-xs font-medium text-gray-800 line-clamp-1">${transacao.descricao}</span>
+                    <span class="text-xs font-bold text-green-600">${formatarMoeda(transacao.valor)}</span>
+                </div>
+                <div class="text-xs text-gray-600 mb-1">${transacao.grupoNatureza} - ${transacao.empresa}</div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">${new Date(transacao.dataPagamento).toLocaleDateString('pt-BR')}</span>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">${transacao.status}</span>
+                </div>
+            `;
+            
+            container.appendChild(item);
+        });
+    };
+
+    // Função para criar KPIs com comparação ano anterior
+    const criarKPIs = () => {
+        const container = document.getElementById('kpi-container');
+        if (!container) return;
+
+        const dadosFiltrados = obterDadosFiltrados();
+        const totalValor2025 = dadosFiltrados.reduce((acc, item) => acc + item.valor, 0);
+        const mediaValor2025 = dadosFiltrados.length > 0 ? totalValor2025 / dadosFiltrados.length : 0;
+        const totalRegistros = dadosFiltrados.length;
+
+        // Calcular dados do ano anterior para comparação
+        const dadosAnoAnterior = filtroAtual === 'em-aberto' ? dadosOriginais.anoAnterior.emAberto :
+                                filtroAtual === 'pagas' ? dadosOriginais.anoAnterior.pagas :
+                                [...dadosOriginais.anoAnterior.emAberto, ...dadosOriginais.anoAnterior.pagas];
+        const totalValor2024 = dadosAnoAnterior.reduce((acc, item) => acc + item.valor, 0);
+        
+        const variacaoTotal = calcularVariacao(totalValor2025, totalValor2024);
+
+        const kpis = [
+            {
+                titulo: 'Total Saídas',
+                valor: formatarMoeda(totalValor2025),
+                variacao: variacaoTotal,
+                icone: 'M19.5 12h-15',
+                status: 'error', // Vermelho para saídas (pagamentos)
+                tipo: 'monetary-negative'
             },
-            function renderAgingChart(data, app) {
-                const buckets = { vencido: 0, hoje: 0, dias7: 0, dias15: 0, dias30: 0, mais30: 0 };
-                data.forEach(d => {
-                    if (d.diasParaVencer < 0) buckets.vencido += d.valorSaldo;
-                    else if (d.diasParaVencer === 0) buckets.hoje += d.valorSaldo;
-                    else if (d.diasParaVencer <= 7) buckets.dias7 += d.valorSaldo;
-                    else if (d.diasParaVencer <= 15) buckets.dias15 += d.valorSaldo;
-                    else if (d.diasParaVencer <= 30) buckets.dias30 += d.valorSaldo;
-                    else buckets.mais30 += d.valorSaldo;
+            {
+                titulo: 'Registros',
+                valor: totalRegistros.toString(),
+                variacao: null,
+                icone: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+                status: 'info'
+            },
+            {
+                titulo: 'Valor Médio',
+                valor: formatarMoeda(mediaValor2025),
+                variacao: null,
+                icone: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+                status: 'info'
+            },
+            {
+                titulo: 'Status',
+                valor: filtroAtual === 'em-aberto' ? 'Em Aberto' : 
+                       filtroAtual === 'pagas' ? 'Pagas' : 'Todas',
+                variacao: null,
+                icone: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                status: filtroAtual === 'pagas' ? 'success' : 
+                        filtroAtual === 'em-aberto' ? 'warning' : 'info'
+            }
+        ];
+
+        container.innerHTML = kpis.map(kpi => {
+            let variacaoHtml = '';
+            if (kpi.variacao !== null) {
+                const sinal = kpi.variacao >= 0 ? '+' : '';
+                const variacaoClass = kpi.variacao >= 0 ? 'positive' : 'negative';
+                const iconeVariacao = kpi.variacao >= 0 ? 
+                    '<svg class="kpi-variation-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>' :
+                    '<svg class="kpi-variation-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>';
+                
+                variacaoHtml = `
+                    <div class="kpi-variation ${variacaoClass}">
+                        ${iconeVariacao}
+                        <span>${sinal}${kpi.variacao.toFixed(1)}% vs 2024</span>
+                    </div>
+                `;
+            }
+            
+            const valorClass = kpi.tipo === 'monetary-negative' ? 'currency-negative' : 
+                              kpi.tipo === 'monetary-positive' ? 'currency-positive' : '';
+            
+            return `
+                <div class="kpi-modern kpi-status-${kpi.status}">
+                    <div class="kpi-header">
+                        <p class="kpi-label">${kpi.titulo}</p>
+                        <svg class="kpi-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${kpi.icone}"></path>
+                        </svg>
+                    </div>
+                    <p class="kpi-value ${valorClass}">${kpi.valor}</p>
+                    ${variacaoHtml}
+                </div>
+            `;
+        }).join('');
+
+        // Atualizar contador de registros
+        const totalRegistrosEl = document.getElementById('total-registros');
+        if (totalRegistrosEl) {
+            totalRegistrosEl.textContent = `${totalRegistros} registros encontrados`;
+        }
+    };
+
+    // Função para mostrar filtros ativos
+    const mostrarFiltrosAtivos = () => {
+        const container = document.getElementById('active-filters-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Adicionar pills dos filtros ativos
+        Object.keys(filtrosAtivos).forEach(campo => {
+            if (filtrosAtivos[campo].length > 0) {
+                filtrosAtivos[campo].forEach(valor => {
+                    const pill = document.createElement('div');
+                    pill.className = 'filter-pill';
+                    pill.innerHTML = `
+                        ${valor}
+                        <button onclick="removerFiltro('${campo}', '${valor}')">×</button>
+                    `;
+                    container.appendChild(pill);
                 });
-                const chartData = { labels: ["Vencido", "Vence Hoje", "Vence em 7d", "Vence em 15d", "Vence em 30d", "Vence em +30d"], datasets: [{ label: 'Valor a Pagar', data: Object.values(buckets), backgroundColor: ['rgba(239, 68, 68, 1)', 'rgba(249, 115, 22, 1)', 'rgba(59, 130, 246, 1)', 'rgba(59, 130, 246, 1)', 'rgba(59, 130, 246, 1)', 'rgba(59, 130, 246, 1)'], }] };
-                const options = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: value => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                            }
-                        }
-                    },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            // Filtro cruzado baseado no período de vencimento
-                            const filterData = {
-                                0: { type: 'vencido', filter: d => d.diasParaVencer < 0 },
-                                1: { type: 'hoje', filter: d => d.diasParaVencer === 0 },
-                                2: { type: '7dias', filter: d => d.diasParaVencer > 0 && d.diasParaVencer <= 7 },
-                                3: { type: '15dias', filter: d => d.diasParaVencer > 7 && d.diasParaVencer <= 15 },
-                                4: { type: '30dias', filter: d => d.diasParaVencer > 15 && d.diasParaVencer <= 30 },
-                                5: { type: 'mais30', filter: d => d.diasParaVencer > 30 }
-                            };
-
-                            // Aplicar filtro customizado baseado no aging
-                            app.applyAgingFilter(filterData[index].type);
-                        }
-                    },
-                    onHover: (event, elements) => {
-                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
-                    }
-                };
-
-                // Criar nova função handler para drill-through
-                app.config.dom.agingChart._contextMenuHandler = function (e) {
-                    e.preventDefault();
-                    const rect = this.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const points = agingChartInstance.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-
-                    if (points.length > 0) {
-                        const index = points[0].index;
-                        const filterData = {
-                            0: { type: 'vencido', filter: d => d.diasParaVencer < 0, label: 'Vencido' },
-                            1: { type: 'hoje', filter: d => d.diasParaVencer === 0, label: 'Vence Hoje' },
-                            2: { type: '7dias', filter: d => d.diasParaVencer > 0 && d.diasParaVencer <= 7, label: 'Vence em 7 dias' },
-                            3: { type: '15dias', filter: d => d.diasParaVencer > 7 && d.diasParaVencer <= 15, label: 'Vence em 15 dias' },
-                            4: { type: '30dias', filter: d => d.diasParaVencer > 15 && d.diasParaVencer <= 30, label: 'Vence em 30 dias' },
-                            5: { type: 'mais30', filter: d => d.diasParaVencer > 30, label: 'Vence em +30 dias' }
-                        };
-
-                        const selectedFilter = filterData[index];
-                        const drillData = data.filter(selectedFilter.filter);
-                        app.openDrillDownModal(`Drill Through - ${selectedFilter.label}`, drillData);
-                    } else {
-                        // Se não clicou em uma barra específica, mostrar todos os dados filtrados
-                        app.openDrillDownModal('Drill Through - Aging List Completo', data);
-                    }
-                };
-
-                // Adicionar evento de clique direito para drill-through
-                app.config.dom.agingChart.addEventListener('contextmenu', app.config.dom.agingChart._contextMenuHandler);
-
-                agingChartInstance = createOrUpdateChart(agingChartInstance, app.config.dom.agingChart, 'bar', chartData, options);
-            },
-            function renderMainTable(data, app) {
-                app.config.renderTable(data, app, app.config.dom.detailedTableBody);
             }
-        ],
-        setupEventListeners: (app) => {
-            app.config.dom.internalToggle.addEventListener('change', e => { app.applyFilter('includeInternal', e.target.checked); });
-            app.config.dom.clearFiltersBtn.addEventListener('click', app.clearFilters);
-            app.config.dom.drilldownModalCloseBtn.addEventListener('click', app.closeDrillDownModal);
-            app.config.dom.drilldownModal.addEventListener('click', e => { if (e.target === app.config.dom.drilldownModal) app.closeDrillDownModal(); });
-        }
-    };
+        });
 
-    const app = new DashboardApp(config);
-
-    // Adicionar método para filtro de aging
-    app.applyAgingFilter = function (agingType) {
-        // Limpar filtros existentes relacionados ao aging
-        this.activeFilters.agingFilter = agingType;
-        this.currentPage = 1;
-        this.updateDashboard();
-    };
-
-    // Sobrescrever getFilteredData para incluir filtro de aging
-    const originalGetFilteredData = config.getFilteredData;
-    config.getFilteredData = (rawData, activeFilters) => {
-        let data = originalGetFilteredData(rawData, activeFilters);
-
-        // Aplicar filtro de aging se existir
-        if (activeFilters.agingFilter) {
-            switch (activeFilters.agingFilter) {
-                case 'vencido':
-                    data = data.filter(d => d.diasParaVencer < 0);
-                    break;
-                case 'hoje':
-                    data = data.filter(d => d.diasParaVencer === 0);
-                    break;
-                case '7dias':
-                    data = data.filter(d => d.diasParaVencer > 0 && d.diasParaVencer <= 7);
-                    break;
-                case '15dias':
-                    data = data.filter(d => d.diasParaVencer > 7 && d.diasParaVencer <= 15);
-                    break;
-                case '30dias':
-                    data = data.filter(d => d.diasParaVencer > 15 && d.diasParaVencer <= 30);
-                    break;
-                case 'mais30':
-                    data = data.filter(d => d.diasParaVencer > 30);
-                    break;
-            }
-        }
-
-        return data;
-    };
-
-
-
-    // Adicionar indicador visual de filtro ativo de aging
-    const originalRenderActiveFilterPills = app.renderActiveFilterPills;
-    app.renderActiveFilterPills = function () {
-        originalRenderActiveFilterPills.call(this);
-
-        // Adicionar pill para filtro de aging se ativo
-        if (this.activeFilters.agingFilter) {
-            const container = this.config.dom.activeFiltersContainer;
+        if (filtrosAtivos.periodo) {
             const pill = document.createElement('div');
-            pill.className = 'filter-pill bg-blue-200 text-blue-700 rounded-full px-3 py-1 text-sm font-medium';
-
-            const agingLabels = {
-                'vencido': 'Vencido',
-                'hoje': 'Vence Hoje',
-                '7dias': 'Vence em 7 dias',
-                '15dias': 'Vence em 15 dias',
-                '30dias': 'Vence em 30 dias',
-                'mais30': 'Vence em +30 dias'
-            };
-
-            pill.innerHTML = `<span>Período: ${agingLabels[this.activeFilters.agingFilter]}</span><button class="ml-2 text-blue-500 hover:text-blue-800">&times;</button>`;
-            pill.querySelector('button').onclick = () => {
-                delete this.activeFilters.agingFilter;
-                this.updateDashboard();
-            };
+            pill.className = 'filter-pill';
+            pill.innerHTML = `
+                ${filtrosAtivos.periodo}
+                <button onclick="removerFiltro('periodo', '${filtrosAtivos.periodo}')">×</button>
+            `;
             container.appendChild(pill);
         }
     };
 
-    // Limpar filtro de aging ao limpar todos os filtros
-    const originalClearFilters = app.clearFilters;
-    app.clearFilters = function () {
-        originalClearFilters.call(this);
-        delete this.activeFilters.agingFilter;
-        this.updateDashboard();
+    // Função para remover filtro específico
+    window.removerFiltro = (campo, valor) => {
+        if (campo === 'periodo') {
+            filtrosAtivos.periodo = '';
+            document.getElementById('periodo-filter').value = '';
+        } else {
+            const index = filtrosAtivos[campo].indexOf(valor);
+            if (index > -1) {
+                filtrosAtivos[campo].splice(index, 1);
+            }
+            
+            // Desmarcar checkbox correspondente
+            const checkbox = document.querySelector(`input[data-campo="${campo}"][value="${valor}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                const container = checkbox.closest('[id$="-container"]');
+                if (container) {
+                    atualizarTextoDropdown(container, campo);
+                }
+            }
+        }
+        
+        atualizarVisualizacoes();
     };
 
-    // Adicionar tooltips informativos para os gráficos
-    const addChartTooltips = () => {
-        const valorChart = document.getElementById('valor-por-natureza-chart');
-        const agingChart = document.getElementById('aging-chart');
-
-        if (valorChart) {
-            valorChart.title = 'Clique esquerdo: Filtrar por natureza | Clique direito: Ver detalhes';
-        }
-
-        if (agingChart) {
-            agingChart.title = 'Clique esquerdo: Filtrar por período | Clique direito: Ver detalhes';
-        }
+    // Função para atualizar todas as visualizações
+    const atualizarVisualizacoes = () => {
+        criarKPIs();
+        criarGraficoEvolucao();
+        criarGraficoCategorias();
+        popularTabela();
+        popularPainelLateral();
+        mostrarFiltrosAtivos();
     };
 
-    // Adicionar indicadores visuais de interatividade
-    const addInteractivityIndicators = () => {
-        const charts = document.querySelectorAll('canvas');
-        charts.forEach(chart => {
-            chart.style.cursor = 'pointer';
-            chart.addEventListener('mouseenter', function () {
-                this.style.opacity = '0.9';
+    // Função de inicialização
+    const inicializar = () => {
+        // Criar dropdowns de filtro
+        criarDropdownFiltro('natureza-filter-container', obterValoresUnicos('grupoNatureza'), 'natureza');
+        criarDropdownFiltro('natureza-operacao-filter-container', obterValoresUnicos('naturezaOperacao'), 'naturezaOperacao');
+        criarDropdownFiltro('empresa-filter-container', obterValoresUnicos('empresa'), 'empresa');
+
+        // Event listener para filtro de período
+        const periodoFilter = document.getElementById('periodo-filter');
+        if (periodoFilter) {
+            periodoFilter.addEventListener('change', (e) => {
+                filtrosAtivos.periodo = e.target.value;
+                atualizarVisualizacoes();
             });
-            chart.addEventListener('mouseleave', function () {
-                this.style.opacity = '1';
-            });
+        }
+
+        // Event listeners para os botões de filtro de status
+        document.getElementById('filtro-em-aberto')?.addEventListener('click', () => alternarFiltro('em-aberto'));
+        document.getElementById('filtro-pagas')?.addEventListener('click', () => alternarFiltro('pagas'));
+        document.getElementById('filtro-todas')?.addEventListener('click', () => alternarFiltro('todas'));
+        
+        // Botão de limpar filtros
+        document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+            // Limpar todos os filtros
+            filtrosAtivos = {
+                natureza: [],
+                naturezaOperacao: [],
+                empresa: [],
+                periodo: ''
+            };
+            
+            // Desmarcar todos os checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Resetar dropdowns
+            document.querySelectorAll('.select-text').forEach(el => el.textContent = 'Todos');
+            
+            // Resetar select de período
+            document.getElementById('periodo-filter').value = '';
+            
+            // Voltar para filtro padrão com cor correta
+            alternarFiltro('em-aberto');
         });
+        
+        // Inicializar
+        atualizarVisualizacoes();
     };
 
-    // Executar após inicialização
-    setTimeout(() => {
-        addChartTooltips();
-        addInteractivityIndicators();
-    }, 100);
-
-    app.init(generateMockData());
+    // Inicializar quando o DOM estiver carregado
+    inicializar();
 });

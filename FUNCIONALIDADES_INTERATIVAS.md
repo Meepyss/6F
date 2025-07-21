@@ -1,4 +1,24 @@
-# Funcionalidades Interativas dos Dashboards
+# Funcionalidades Interativas do Painel Financeiro
+
+## Páginas Disponíveis
+
+### 1. Fluxo de Caixa (Página Principal)
+- Visão geral do fluxo de caixa com gráficos comparativos
+- Projeções futuras de recebimentos vs pagamentos
+- Calendário financeiro com alertas
+- Filtros por empresa, período e movimentações internas
+
+### 2. Fluxo de Entradas
+- Análise temporal de recebimentos com comparação ao ano anterior
+- Distribuição por categoria de natureza
+- Visualização de valores recebidos vs em aberto
+- Filtros por status, empresa, natureza e período
+
+### 3. Fluxo de Saídas (Contas a Pagar)
+- Análise temporal de pagamentos vs ano anterior
+- Distribuição por categoria de natureza
+- Comparação entre contas pagas e em aberto
+- Filtros por status, empresa, natureza e período
 
 ## Filtro Cruzado (Cross-Filter)
 
@@ -6,25 +26,30 @@
 - **Clique simples**: Aplica filtro exclusivo (substitui filtros anteriores)
 - **Ctrl + Clique**: Adiciona/remove filtro (permite múltiplas seleções)
 
-### Dashboards Implementados
+### Funcionalidades por Dashboard
 
-#### Contas a Pagar
+#### Fluxo de Saídas
 1. **Gráfico de Valor por Natureza**
    - Clique nas barras para filtrar por grupo de natureza
    - Filtra automaticamente todos os outros componentes
 
-2. **Gráfico Aging List**
-   - Clique nas barras para filtrar por período de vencimento
-   - Períodos: Vencido, Hoje, 7 dias, 15 dias, 30 dias, +30 dias
+2. **Gráfico Temporal (Comparativo Anual)**
+   - Clique nas barras para filtrar por período específico
+   - Mostra comparação com ano anterior
 
-#### Contas a Receber
-1. **Gráfico de Valor por Natureza**
-   - Clique nas barras para filtrar por natureza da operação
+#### Fluxo de Entradas
+1. **Gráfico Temporal (Comparativo Anual)**
+   - Clique nas barras para filtrar por período específico
+   - Mostra comparação com ano anterior
+
+2. **Gráfico de Valores por Tipo de Receita**
+   - Clique nas barras para filtrar por categoria de receita
    - Filtra automaticamente todos os outros componentes
 
-2. **Gráfico de Maiores Devedores**
-   - Clique nas barras para filtrar por cliente específico
-   - Mostra apenas contas do cliente selecionado
+#### Fluxo de Caixa
+1. **Gráficos Interativos**
+   - Navegação entre períodos (diário, semanal, mensal)
+   - Filtros por empresa e inclusão de movimentações internas
 
 ## Drill-Through (Detalhamento)
 
@@ -38,35 +63,33 @@
 3. **KPIs Específicos**: Calcula métricas para o subconjunto de dados
 4. **Navegação Fácil**: Botão de fechar e clique fora para sair
 
-### Exemplos de Uso
-
-#### Contas a Pagar
-- **Clique direito no gráfico de natureza**: Mostra todas as contas da natureza específica
-- **Clique direito no aging**: Mostra contas do período específico (ex: apenas vencidas)
-
-#### Contas a Receber
-- **Clique direito no gráfico de natureza**: Mostra contas da natureza específica
-- **Clique direito no pareto**: Mostra detalhes do cliente específico
-
 ## Indicadores Visuais
 
 ### Dicas de Interatividade
-- **Hint visual**: Aparece no canto superior direito dos gráficos ao passar o mouse
 - **Cursor pointer**: Indica elementos clicáveis
-- **Opacity change**: Feedback visual ao passar o mouse
+- **Feedback visual**: Mudança de opacidade ao passar o mouse
+- **Botões ativos**: Destaque visual para filtros aplicados
 
 ### Pills de Filtro
 - **Filtros ativos**: Mostrados como pills coloridas
 - **Remoção fácil**: Clique no "×" para remover filtro específico
-- **Filtros especiais**: Aging filters têm cor diferenciada
+- **Botão limpar**: Remove todos os filtros de uma vez
+
+## Navegação
+- **Fluxo de Caixa**: Página principal do sistema
+- **Fluxo Entradas**: Análise de recebimentos e valores a receber
+- **Fluxo Saídas**: Análise de pagamentos e contas a pagar
+- Navegação integrada entre todas as páginas
 
 ## Compatibilidade
 - Funciona em todos os navegadores modernos
-- Responsivo para dispositivos móveis
+- Design responsivo para dispositivos móveis
 - Suporte a teclado (Ctrl+Click para múltipla seleção)
+- Cores neutras seguindo o padrão do projeto [[memory:3921316]]
 
 ## Dicas de Uso
 1. Use Ctrl+Click para comparar múltiplas categorias
 2. Clique direito para ver detalhes sem aplicar filtros
 3. Use o botão "Limpar Filtros" para resetar todas as seleções
 4. Os filtros são aplicados em tempo real em todos os componentes
+5. Navegue entre as páginas usando o menu superior

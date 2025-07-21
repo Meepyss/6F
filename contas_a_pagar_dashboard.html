@@ -3,14 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Contas a Pagar</title>
+    <title>Painel Financeiro - Fluxo de Saídas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .dashboard-theme {
+            --primary-color: #003D75;
+            --primary-light: #A4C4E0;
+            --primary-dark: #002a52;
+        }
+        .bg-primary { background-color: var(--primary-color); }
+        .bg-primary-light { background-color: var(--primary-light); }
+        .text-primary { color: var(--primary-color); }
+        .border-primary { border-color: var(--primary-color); }
+        
+        /* Estilos melhorados para botões de filtro */
+        .filter-btn-group button {
+            position: relative;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .filter-btn-group button:hover:not(.active) {
+            background-color: var(--gray-100);
+            color: var(--gray-800);
+            transform: translateY(-1px);
+        }
+        
+        .filter-btn-group button.active {
+            background-color: var(--primary-dark) !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .filter-btn-em-aberto.active,
+        .filter-btn-pagas.active,
+        .filter-btn-todas.active {
+            background-color: var(--primary-dark) !important;
+            border-color: var(--primary-dark) !important;
+            color: white !important;
+        }
+    </style>
 </head>
-<body class="text-gray-700">
+<body class="text-gray-700 bg-gray-50">
     <nav class="bg-white shadow-md">
         <div class="container mx-auto px-8">
             <div class="flex items-center justify-between h-16">
@@ -18,30 +59,53 @@
                     <a class="text-xl font-bold text-gray-800" href="./index.html">Painel Financeiro</a>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="./index.html" class="text-gray-600 hover:text-blue-500">Início</a>
-                    <a href="./contas_a_receber_dashboard.html" class="text-gray-600 hover:text-blue-500">Contas a Receber</a>
-                    <a href="./contas_a_pagar_dashboard.html" class="text-gray-600 hover:text-blue-500 font-semibold text-blue-600">Contas a Pagar</a>
-                    <a href="./fluxo_de_caixa_dashboard.html" class="text-gray-600 hover:text-blue-500">Fluxo de Caixa</a>
+                    <a href="./index.html" class="text-gray-600 hover:text-primary">Fluxo de Caixa</a>
+                    <a href="./contas_a_receber_dashboard.html" class="text-gray-600 hover:text-primary">Fluxo Entradas</a>
+                    <a href="./contas_a_pagar_dashboard.html" class="text-primary font-semibold">Fluxo Saídas</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="container mx-auto p-3 md:p-4 lg:p-6">
-        <!-- Cabeçalho com Filtros Integrados -->
+    <div class="container mx-auto p-3 lg:p-4">
+        <!-- Cabeçalho -->
         <div class="bg-white rounded-xl shadow-sm border mb-4">
-            <div class="p-4 border-b border-gray-100">
+            <div class="p-4 border-b border-gray-100 bg-primary-light">
                 <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-gray-800">Contas a Pagar</h1>
-                    <button id="clear-filters-btn" class="bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">
-                        Limpar Filtros
-                    </button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-primary">Fluxo Saídas</h1>
+                        <p class="text-sm text-gray-600 mt-1">Visualizar contas pagas, em aberto ou todas</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Filtro Simples de Status -->
+                        <div class="flex bg-white rounded-lg p-1 shadow-sm border filter-btn-group">
+                            <button id="filtro-em-aberto" class="px-3 py-2 text-xs font-medium rounded-md transition-all active filter-btn-em-aberto">
+                                Em Aberto
+                            </button>
+                            <button id="filtro-pagas" class="px-3 py-2 text-xs font-medium rounded-md transition-all text-gray-600 filter-btn-pagas">
+                                Pagas
+                            </button>
+                            <button id="filtro-todas" class="px-3 py-2 text-xs font-medium rounded-md transition-all text-gray-600 filter-btn-todas">
+                                Todas
+                            </button>
+                        </div>
+                        <button id="clear-filters-btn" class="btn-primary hover:bg-primary-darker text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">
+                            Limpar Filtros
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <!-- Filtros Compactos -->
-            <div class="p-4 bg-gray-50">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div class="p-3 bg-gray-50">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-medium text-gray-600">Filtros:</span>
+                    <div class="text-xs text-gray-500">
+                        <span id="total-registros">Carregando...</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div class="space-y-1">
                         <label class="text-xs font-medium text-gray-600">Grupo Natureza</label>
                         <div id="natureza-filter-container" class="relative"></div>
@@ -50,21 +114,23 @@
                         <label class="text-xs font-medium text-gray-600">Natureza Operação</label>
                         <div id="natureza-operacao-filter-container" class="relative"></div>
                     </div>
-
                     <div class="space-y-1">
                         <label class="text-xs font-medium text-gray-600">Empresa</label>
                         <div id="empresa-filter-container" class="relative"></div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-medium text-gray-600">Mov. Internas</label>
-                        <div class="flex items-center h-8">
-                            <div class="relative inline-block w-8 mr-2 align-middle select-none">
-                                <input type="checkbox" name="internal-toggle" id="internal-toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-2 appearance-none cursor-pointer"/>
-                                <label for="internal-toggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer">
-                                    <span class="toggle-ball absolute inset-y-0 left-0 w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out"></span>
-                                </label>
-                            </div>
-                        </div>
+                        <label class="text-xs font-medium text-gray-600">Período</label>
+                        <select id="periodo-filter" class="w-full text-xs border border-gray-300 rounded-md p-2">
+                            <option value="">Todos os períodos</option>
+                            <option value="2025-01">Janeiro 2025</option>
+                            <option value="2025-02">Fevereiro 2025</option>
+                            <option value="2025-03">Março 2025</option>
+                            <option value="2025-04">Abril 2025</option>
+                            <option value="2025-05">Maio 2025</option>
+                            <option value="2025-06">Junho 2025</option>
+                            <option value="2025-07">Julho 2025</option>
+                            <option value="2025-08">Agosto 2025</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -73,57 +139,78 @@
             </div>
         </div>
 
-        <!-- KPIs Compactos -->
-        <div id="kpi-container" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <!-- KPIs serão injetados aqui -->
-        </div>
-
-        <!-- Layout de Gráficos Otimizado -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <!-- Gráfico de Valor Total por Natureza -->
-            <div class="chart-card relative">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-semibold text-base text-gray-800">Valor por Natureza</h3>
-                    <span class="text-xs text-gray-500">Total por categoria</span>
+        <!-- Layout Principal - Duas Colunas -->
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+            <!-- Coluna Principal (3/4) -->
+            <div class="xl:col-span-3 space-y-4">
+                <!-- KPIs -->
+                <div id="kpi-container" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- KPIs serão injetados aqui -->
                 </div>
-                <div class="interactive-hint">Clique: Filtrar | Botão direito: Detalhes</div>
-                <div class="h-[320px]"><canvas id="valor-por-natureza-chart"></canvas></div>
-            </div>
-            
-            <!-- Gráfico de Projeção de Vencimentos -->
-            <div class="chart-card relative">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-semibold text-base text-gray-800">Aging List</h3>
-                    <span class="text-xs text-gray-500">Projeção de vencimentos</span>
-                </div>
-                <div class="interactive-hint">Clique: Filtrar | Botão direito: Detalhes</div>
-                <div class="h-[320px]"><canvas id="aging-chart"></canvas></div>
-            </div>
-        </div>
 
-        <!-- Tabela Compacta -->
-        <div class="bg-white rounded-xl shadow-sm border">
-            <div class="p-4 border-b border-gray-100">
-                <h3 class="font-semibold text-base text-gray-800">Detalhes das Contas</h3>
+                <!-- Gráficos Principais -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- Evolução dos Valores -->
+                    <div class="chart-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-base text-gray-800">Evolução dos Valores Pagos</h3>
+                            <span class="text-xs text-gray-500 bg-primary-light px-2 py-1 rounded">Comparativo YoY</span>
+                        </div>
+                        <div class="h-[280px]"><canvas id="evolucao-valores-chart"></canvas></div>
+                    </div>
+
+                    <!-- Valores por Tipo -->
+                    <div class="chart-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-base text-gray-800">Valores por Tipo de Despesa</h3>
+                            <span class="text-xs text-gray-500 bg-primary-light px-2 py-1 rounded">Comparativo YoY</span>
+                        </div>
+                        <div class="h-[280px]"><canvas id="valores-categoria-chart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Tabela Detalhada -->
+                <div class="bg-white rounded-xl shadow-sm border">
+                    <div class="p-4 border-b border-gray-100 bg-primary-light">
+                        <h3 class="font-semibold text-base text-primary">Código e Descrição Despesa</h3>
+                    </div>
+                    <div class="overflow-auto max-h-[350px]">
+                        <table class="w-full text-xs">
+                            <thead class="text-gray-500 bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-2 text-left font-medium w-16">Código</th>
+                                    <th class="p-2 text-left font-medium min-w-[200px]">Descrição Despesa</th>
+                                    <th class="p-2 text-right font-medium w-20">Janeiro</th>
+                                    <th class="p-2 text-right font-medium w-20">Fevereiro</th>
+                                    <th class="p-2 text-right font-medium w-20">Março</th>
+                                    <th class="p-2 text-right font-medium w-20">Abril</th>
+                                    <th class="p-2 text-right font-medium w-20">Maio</th>
+                                    <th class="p-2 text-right font-medium w-20">Junho</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailed-table-body"></tbody>
+                        </table>
+                    </div>
+                    <!-- Controles de Paginação -->
+                    <div id="pagination-controls" class="flex justify-center items-center p-3 border-t border-gray-100 gap-2"></div>
+                </div>
             </div>
-            <div class="overflow-auto max-h-[400px]">
-                <table class="w-full text-xs">
-                    <thead class="text-gray-500 bg-gray-50 sticky top-0 z-10">
-                        <tr>
-                            <th class="p-2 text-left font-medium">Fornecedor</th>
-                            <th class="p-2 text-left font-medium">Documento</th>
-                            <th class="p-2 text-left font-medium">Emissão</th>
-                            <th class="p-2 text-left font-medium">Vencimento</th>
-                            <th class="p-2 text-right font-medium">Valor</th>
-                            <th class="p-2 text-left font-medium">Natureza</th>
-                            <th class="p-2 text-left font-medium">Empresa</th>
-                        </tr>
-                    </thead>
-                    <tbody id="detailed-table-body"></tbody>
-                </table>
+
+            <!-- Coluna Lateral (1/4) - Transações Recentes -->
+            <div class="xl:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm border sticky top-4">
+                    <div class="p-4 border-b border-gray-100 bg-primary-light">
+                        <h3 class="font-semibold text-base text-primary">Pagamentos Realizados</h3>
+                        <p class="text-xs text-gray-600 mt-1">Últimas transações processadas</p>
+                    </div>
+                    <div class="overflow-auto max-h-[600px]" id="transacoes-recentes-container">
+                        <!-- Lista será inserida dinamicamente -->
+                    </div>
+                    <div class="p-3 border-t border-gray-100 bg-gray-50 text-center">
+                        <button class="text-xs text-primary hover:text-primary-dark font-medium">Ver todos os pagamentos</button>
+                    </div>
+                </div>
             </div>
-            <!-- Controles de Paginação -->
-            <div id="pagination-controls" class="flex justify-center items-center p-3 border-t border-gray-100 gap-2"></div>
         </div>
     </div>
 

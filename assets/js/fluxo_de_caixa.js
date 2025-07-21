@@ -141,24 +141,66 @@ document.addEventListener('DOMContentLoaded', () => {
         const pmr = 35 + (Math.random() - 0.5) * 5;
         const pmp = 40 + (Math.random() - 0.5) * 5;
 
+        const saldoLiquido = initialBalance + realizadoTotal;
+        
         const kpis = [
-            { label: 'Saldo Líquido Atual', value: formatCurrency(initialBalance + realizadoTotal), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 10v-1m0 0a2.5 2.5 0 100-5 2.5 2.5 0 000 5z' },
-            { label: 'Total a Receber', value: formatCurrency(totalReceber), icon: 'M12 4.5v15m7.5-7.5h-15' },
-            { label: 'Total a Pagar', value: formatCurrency(totalPagar), icon: 'M19.5 12h-15' },
-            { label: 'PMR', value: `${pmr.toFixed(1)} dias`, icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18' },
-            { label: 'PMP', value: `${pmp.toFixed(1)} dias`, icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18' },
-            { label: 'Desvio (Prev. x Real.)', value: `${desvio.toFixed(2)}%`, icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h15.75c.621 0 1.125.504 1.125 1.125v6.75C21 20.496 20.496 21 19.875 21H4.125A1.125 1.125 0 013 19.875v-6.75zM12 3v9' },
+            { 
+                label: 'Saldo Líquido', 
+                value: formatCurrency(saldoLiquido), 
+                icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 10v-1m0 0a2.5 2.5 0 100-5 2.5 2.5 0 000 5z',
+                status: saldoLiquido >= 0 ? 'success' : 'error',
+                tipo: saldoLiquido >= 0 ? 'monetary-positive' : 'monetary-negative'
+            },
+            { 
+                label: 'A Receber', 
+                value: formatCurrency(totalReceber), 
+                icon: 'M12 4.5v15m7.5-7.5h-15',
+                status: 'success',
+                tipo: 'monetary-positive'
+            },
+            { 
+                label: 'A Pagar', 
+                value: formatCurrency(totalPagar), 
+                icon: 'M19.5 12h-15',
+                status: 'error',
+                tipo: 'monetary-negative'
+            },
+            { 
+                label: 'PMR', 
+                value: `${pmr.toFixed(1)} dias`, 
+                icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+                status: 'info'
+            },
+            { 
+                label: 'PMP', 
+                value: `${pmp.toFixed(1)} dias`, 
+                icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+                status: 'info'
+            },
+            { 
+                label: 'Desvio Realizado', 
+                value: `${desvio.toFixed(2)}%`, 
+                icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h15.75c.621 0 1.125.504 1.125 1.125v6.75C21 20.496 20.496 21 19.875 21H4.125A1.125 1.125 0 013 19.875v-6.75zM12 3v9',
+                status: desvio >= 0 ? 'success' : 'error'
+            },
         ];
 
-        app.config.dom.kpiContainer.innerHTML = kpis.map(kpi => `
-            <div class="bg-white rounded-lg shadow-sm border p-3">
-                <div class="flex items-center justify-between text-gray-400 mb-1">
-                    <span class="text-xs font-medium text-gray-600">${kpi.label}</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${kpi.icon}"></path></svg>
+        app.config.dom.kpiContainer.innerHTML = kpis.map(kpi => {
+            const valorClass = kpi.tipo === 'monetary-negative' ? 'currency-negative' : 
+                              kpi.tipo === 'monetary-positive' ? 'currency-positive' : '';
+            
+            return `
+                <div class="kpi-modern kpi-status-${kpi.status}">
+                    <div class="kpi-header">
+                        <p class="kpi-label">${kpi.label}</p>
+                        <svg class="kpi-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${kpi.icon}"></path>
+                        </svg>
+                    </div>
+                    <p class="kpi-value ${valorClass}">${kpi.value}</p>
                 </div>
-                <p class="text-lg font-bold text-gray-800">${kpi.value}</p>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     };
 
     const renderAlerts = (filteredData, app) => {
@@ -169,27 +211,221 @@ document.addEventListener('DOMContentLoaded', () => {
         const uniqueOverdueClients = new Set(overdueReceivables.map(d => d.company || 'Cliente Desconhecido')).size;
         const uniqueOverdueSuppliers = new Set(overduePayables.map(d => d.company || 'Fornecedor Desconhecido')).size;
 
+        // Calcular totais monetários
+        const totalOverdueValue = overdueItems.reduce((sum, item) => sum + (item.previstoValue || 0), 0);
+        const totalReceivablesValue = overdueReceivables.reduce((sum, item) => sum + (item.previstoValue || 0), 0);
+        const totalPayablesValue = overduePayables.reduce((sum, item) => sum + (item.previstoValue || 0), 0);
+
         app.config.dom.alertsContainer.innerHTML = `
             <h3 class="font-semibold text-base text-gray-800 mb-2">Alertas</h3>
             <div class="space-y-2">
-                <div class="flex items-center justify-between p-2 rounded-lg bg-red-50 text-red-700">
-                    <span class="font-medium text-xs">Contas Vencidas</span>
-                    <span class="font-bold text-sm">${overdueItems.length}</span>
+                <div class="flex flex-col p-3 rounded-lg bg-red-50 border border-red-200 cursor-pointer hover:bg-red-100 transition-colors" 
+                     onclick="openAlertDrillthrough('todas', '${totalOverdueValue}', ${overdueItems.length})">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-medium text-xs text-red-800">Contas Vencidas</span>
+                        <span class="font-bold text-sm text-red-900">${overdueItems.length}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-lg text-red-900">${formatCurrency(totalOverdueValue)}</span>
+                    </div>
                 </div>
-                <div class="flex items-center justify-between p-2 rounded-lg bg-yellow-50 text-yellow-700">
-                    <span class="font-medium text-xs">Clientes em Atraso</span>
-                    <span class="font-bold text-sm">${uniqueOverdueClients}</span>
+                
+                <div class="flex flex-col p-3 rounded-lg bg-orange-50 border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+                     onclick="openAlertDrillthrough('receber', '${totalReceivablesValue}', ${overdueReceivables.length})">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-medium text-xs text-orange-800">A Receber Vencidas</span>
+                        <span class="font-bold text-sm text-orange-900">${overdueReceivables.length}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-lg text-orange-900">${formatCurrency(totalReceivablesValue)}</span>
+                    </div>
                 </div>
-                <div class="flex items-center justify-between p-2 rounded-lg bg-orange-50 text-orange-700">
-                    <span class="font-medium text-xs">Fornecedores em Atraso</span>
-                    <span class="font-bold text-sm">${uniqueOverdueSuppliers}</span>
+                
+                <div class="flex flex-col p-3 rounded-lg bg-yellow-50 border border-yellow-200 cursor-pointer hover:bg-yellow-100 transition-colors"
+                     onclick="openAlertDrillthrough('pagar', '${totalPayablesValue}', ${overduePayables.length})">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-medium text-xs text-yellow-800">A Pagar Vencidas</span>
+                        <span class="font-bold text-sm text-yellow-900">${overduePayables.length}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-lg text-yellow-900">${formatCurrency(totalPayablesValue)}</span>
+                    </div>
                 </div>
             </div>
         `;
     };
 
+    // Função global para fechar o modal (disponibilizar globalmente)
+    window.closeAlertModal = closeAlertModal;
+
+    // Função global para abrir o drill-through dos alertas
+    window.openAlertDrillthrough = (alertType, totalValue, totalCount) => {
+        const modal = document.getElementById('alert-drillthrough-modal');
+        const title = document.getElementById('alert-modal-title');
+        const subtitle = document.getElementById('alert-modal-subtitle');
+        const kpisContainer = document.getElementById('alert-modal-kpis');
+        const tableBody = document.getElementById('alert-modal-table-body');
+        
+        if (!modal || !title || !subtitle || !kpisContainer || !tableBody) return;
+
+        // Obter dados filtrados com base no tipo de alerta
+        const allData = generateMockData();
+        const overdueItems = allData.filter(d => d.isOverdue);
+        
+        let filteredData = [];
+        let titleText = '';
+        let subtitleText = '';
+        
+        switch (alertType) {
+            case 'todas':
+                filteredData = overdueItems;
+                titleText = 'Todas as Contas Vencidas';
+                subtitleText = 'Detalhamento completo de contas a receber e a pagar em atraso';
+                break;
+            case 'receber':
+                filteredData = overdueItems.filter(d => d.type === 'receber');
+                titleText = 'Contas a Receber Vencidas';
+                subtitleText = 'Detalhamento de valores em atraso de clientes';
+                break;
+            case 'pagar':
+                filteredData = overdueItems.filter(d => d.type === 'pagar');
+                titleText = 'Contas a Pagar Vencidas';
+                subtitleText = 'Detalhamento de valores em atraso para fornecedores';
+                break;
+        }
+
+        // Configurar título e subtítulo
+        title.textContent = titleText;
+        subtitle.textContent = subtitleText;
+
+        // Calcular KPIs específicos
+        const totalValueNum = parseFloat(totalValue);
+        const avgValue = totalCount > 0 ? totalValueNum / totalCount : 0;
+        const today = new Date();
+        const avgDaysOverdue = filteredData.length > 0 ? 
+            filteredData.reduce((sum, item) => {
+                const itemDate = new Date(item.date);
+                const diffTime = today - itemDate;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return sum + diffDays;
+            }, 0) / filteredData.length : 0;
+
+        // Renderizar KPIs do modal
+        kpisContainer.innerHTML = `
+            <div class="text-center">
+                <p class="text-sm font-medium text-gray-600">Total de Contas</p>
+                <p class="text-2xl font-bold text-gray-900">${totalCount}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-medium text-gray-600">Valor Total</p>
+                <p class="text-2xl font-bold text-red-600">${formatCurrency(totalValueNum)}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-medium text-gray-600">Valor Médio</p>
+                <p class="text-2xl font-bold text-gray-900">${formatCurrency(avgValue)}</p>
+            </div>
+        `;
+
+        // Renderizar tabela
+        tableBody.innerHTML = filteredData.map(item => {
+            const itemDate = new Date(item.date);
+            const diffTime = today - itemDate;
+            const daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const typeText = item.type === 'receber' ? 'A Receber' : 'A Pagar';
+            const typeClass = item.type === 'receber' ? 'text-green-600' : 'text-red-600';
+            
+            return `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="p-3">${formatDate(itemDate)}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass} bg-opacity-10 ${item.type === 'receber' ? 'bg-green-100' : 'bg-red-100'}">${typeText}</span>
+                    </td>
+                    <td class="p-3">${item.company}</td>
+                    <td class="p-3 text-right font-semibold">${formatCurrency(item.previstoValue)}</td>
+                    <td class="p-3 text-right">${formatCurrency(item.realizadoValue)}</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs font-bold text-red-700 bg-red-100">${daysOverdue} dias</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium text-red-700 bg-red-100">Vencido</span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Configurar event listeners e mostrar modal
+        setupModalEventListeners();
+        modal.classList.remove('hidden');
+    };
+
+    // Função para fechar o modal
+    const closeAlertModal = () => {
+        console.log('closeAlertModal called'); // Debug log
+        const modal = document.getElementById('alert-drillthrough-modal');
+        console.log('Modal found:', !!modal); // Debug log
+        
+        if (modal && !modal.classList.contains('hidden')) {
+            console.log('Closing modal...'); // Debug log
+            modal.classList.add('hidden');
+            
+            // Limpar conteúdo do modal para melhor performance
+            const tableBody = document.getElementById('alert-modal-table-body');
+            const kpisContainer = document.getElementById('alert-modal-kpis');
+            
+            if (tableBody) tableBody.innerHTML = '';
+            if (kpisContainer) kpisContainer.innerHTML = '';
+        }
+    };
+
+    // Configurar event listeners para o modal (apenas uma vez)
+    const setupModalEventListeners = () => {
+        const closeBtn = document.getElementById('alert-modal-close-btn');
+        const modal = document.getElementById('alert-drillthrough-modal');
+        
+        if (closeBtn && !closeBtn._listenerAdded) {
+            closeBtn.addEventListener('click', (e) => {
+                console.log('Close button clicked'); // Debug log
+                e.preventDefault();
+                e.stopPropagation();
+                closeAlertModal();
+            });
+            closeBtn._listenerAdded = true;
+        }
+        
+        if (modal && !modal._listenerAdded) {
+            modal.addEventListener('click', (e) => {
+                console.log('Modal clicked, target:', e.target.id); // Debug log
+                if (e.target === modal) {
+                    console.log('Clicking outside modal content'); // Debug log
+                    closeAlertModal();
+                }
+            });
+            modal._listenerAdded = true;
+        }
+        
+        // Adicionar escape key listener
+        if (!document._escapeListenerAdded) {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('alert-drillthrough-modal');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        closeAlertModal();
+                    }
+                }
+            });
+            document._escapeListenerAdded = true;
+        }
+    };
+
     const renderChart = (filteredData, app) => {
-        const period = app.config.dom.projectionPeriodFilter.querySelector('.active').dataset.period;
+        const ctx = app.config.dom.chartCanvas;
+        if (!ctx) {
+            console.error('Canvas element cashflow-chart not found');
+            return;
+        }
+
+        const period = app.config.dom.projectionPeriodFilter.querySelector('.active')?.dataset?.period || 'weekly';
         const today = new Date();
         today.setHours(23, 59, 59, 999);
         const pastData = filteredData.filter(item => new Date(item.date) < today);
@@ -250,46 +486,125 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (cashflowChartInstance) {
             cashflowChartInstance.destroy();
+            cashflowChartInstance = null;
         }
 
-        // Configurar unidade de tempo baseada no período
-        let timeUnit = 'day';
-        let displayFormat = 'dd/MM';
-        if (period === 'weekly') {
-            timeUnit = 'week';
-            displayFormat = 'dd/MM';
-        } else if (period === 'monthly') {
-            timeUnit = 'month';
-            displayFormat = 'MMM/yy';
-        }
+        // Configurar formatação de labels baseada no período
+        let formatLabel = (label) => {
+            try {
+                const date = new Date(label + 'T00:00:00');
+                return formatDate(date);
+            } catch (e) {
+                return label;
+            }
+        };
 
-        cashflowChartInstance = new Chart(app.config.dom.chartCanvas, {
+        const formattedLabels = labels.map(formatLabel);
+
+        cashflowChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: formattedLabels,
                 datasets: [
-                    { label: 'Realizado', data: realizadoData, backgroundColor: '#1d4ed8', order: 2 },
-                    { label: 'Previsto', data: previstoData, backgroundColor: '#60a5fa', order: 2 },
-                    { label: 'Diferença', data: diferencaData, borderColor: '#f97316', type: 'line', fill: false, tension: 0.4, pointRadius: 2, order: 1 },
+                    { 
+                        label: 'Previsto', 
+                        data: previstoData, 
+                        backgroundColor: '#A4C4E0',
+                        borderColor: '#003D75',
+                        borderWidth: 1,
+                        order: 2 
+                    },
+                    { 
+                        label: 'Realizado', 
+                        data: realizadoData, 
+                        backgroundColor: '#003D75',
+                        borderColor: '#003D75',
+                        borderWidth: 1,
+                        order: 1 
+                    }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 scales: {
-                    x: { type: 'time', time: { unit: timeUnit, displayFormats: { [timeUnit]: displayFormat } }, grid: { display: false }, stacked: false },
-                    y: { grid: { color: '#e5e7eb' }, ticks: { callback: value => formatCurrency(value) }, stacked: false }
+                    x: { 
+                        grid: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Período'
+                        }
+                    },
+                    y: { 
+                        grid: { color: '#e5e7eb' }, 
+                        ticks: { 
+                            callback: value => formatCurrency(value) 
+                        },
+                        title: {
+                            display: true,
+                            text: 'Valores'
+                        }
+                    }
                 },
                 plugins: {
-                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, padding: 10 } },
-                    tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: ${formatCurrency(c.raw)}` } }
+                    legend: { 
+                        position: 'top', 
+                        align: 'start', 
+                        labels: { 
+                            usePointStyle: true, 
+                            padding: 15,
+                            generateLabels: function(chart) {
+                                const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                const labels = original.call(this, chart);
+                                return labels.reverse(); // Mostra Realizado primeiro
+                            }
+                        } 
+                    },
+                    tooltip: { 
+                        mode: 'index', 
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 61, 117, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        callbacks: { 
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = formatCurrency(context.parsed.y);
+                                return `${label}: ${value}`;
+                            },
+                            afterBody: function(tooltipItems) {
+                                if (tooltipItems.length >= 2) {
+                                    const realizado = tooltipItems.find(item => item.dataset.label === 'Realizado')?.parsed.y || 0;
+                                    const previsto = tooltipItems.find(item => item.dataset.label === 'Previsto')?.parsed.y || 0;
+                                    const diferenca = realizado - previsto;
+                                    const percentual = previsto !== 0 ? ((diferenca / Math.abs(previsto)) * 100).toFixed(1) : '0.0';
+                                    return [
+                                        '',
+                                        `Diferença: ${formatCurrency(diferenca)}`,
+                                        `Variação: ${percentual}%`
+                                    ];
+                                }
+                                return [];
+                            }
+                        } 
+                    }
                 }
             }
         });
     };
 
     const renderProjectedBalanceChart = (filteredData, app) => {
-        const period = app.config.dom.projectionPeriodFilter.querySelector('.active').dataset.period;
+        const ctx = app.config.dom.projectedBalanceCanvas;
+        if (!ctx) {
+            console.error('Canvas element projected-balance-chart not found');
+            return;
+        }
+
+        const period = app.config.dom.projectionPeriodFilter.querySelector('.active')?.dataset?.period || 'weekly';
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -331,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const sortedKeys = Object.keys(projections).sort();
-        const labels = sortedKeys;
         const receberData = sortedKeys.map(key => projections[key].receber);
         const pagarData = sortedKeys.map(key => projections[key].pagar);
 
@@ -343,33 +657,127 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (projectedBalanceChartInstance) {
             projectedBalanceChartInstance.destroy();
+            projectedBalanceChartInstance = null;
         }
 
-        let timeUnit = 'day';
-        if (period === 'weekly') timeUnit = 'week';
-        if (period === 'monthly') timeUnit = 'month';
+        // Formatar labels
+        const formattedLabels = sortedKeys.map(key => {
+            try {
+                const date = new Date(key + 'T00:00:00');
+                return formatDate(date);
+            } catch (e) {
+                return key;
+            }
+        });
 
-        projectedBalanceChartInstance = new Chart(app.config.dom.projectedBalanceCanvas, {
+        projectedBalanceChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: formattedLabels,
                 datasets: [
-                    { label: 'A Receber (Previsto)', data: receberData, backgroundColor: '#22c55e' },
-                    { label: 'A Pagar (Previsto)', data: pagarData, backgroundColor: '#ef4444' },
-                    { label: 'Saldo Acumulado Projetado', data: saldoAcumuladoData, type: 'line', borderColor: '#3b82f6', backgroundColor: 'transparent', pointRadius: 1, tension: 0.1, yAxisID: 'y-saldo' },
+                    { 
+                        label: 'Recebimentos Previstos', 
+                        data: receberData, 
+                        backgroundColor: '#059669',
+                        borderColor: '#047857',
+                        borderWidth: 1
+                    },
+                    { 
+                        label: 'Pagamentos Previstos', 
+                        data: pagarData, 
+                        backgroundColor: '#dc2626',
+                        borderColor: '#b91c1c',
+                        borderWidth: 1
+                    },
+                    { 
+                        label: 'Saldo Acumulado', 
+                        data: saldoAcumuladoData, 
+                        type: 'line', 
+                        borderColor: '#003D75', 
+                        backgroundColor: 'transparent', 
+                        pointRadius: 3, 
+                        pointBackgroundColor: '#003D75',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        tension: 0.1, 
+                        yAxisID: 'y1',
+                        borderWidth: 3
+                    },
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 scales: {
-                    x: { type: 'time', time: { unit: timeUnit, displayFormats: { [timeUnit]: 'dd/MM/yy' } }, stacked: true, grid: { display: false } },
-                    y: { stacked: true, position: 'left', grid: { color: '#e5e7eb' }, ticks: { callback: value => formatCurrency(value) } },
-                    'y-saldo': { position: 'right', grid: { display: false }, ticks: { callback: value => formatCurrency(value) } }
+                    x: { 
+                        stacked: true, 
+                        grid: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Período'
+                        }
+                    },
+                    y: { 
+                        stacked: true, 
+                        position: 'left', 
+                        grid: { color: '#e5e7eb' }, 
+                        ticks: { 
+                            callback: value => formatCurrency(value) 
+                        },
+                        title: {
+                            display: true,
+                            text: 'Fluxo de Caixa'
+                        }
+                    },
+                    y1: { 
+                        type: 'linear',
+                        position: 'right', 
+                        grid: { display: false }, 
+                        ticks: { 
+                            callback: value => formatCurrency(value) 
+                        },
+                        title: {
+                            display: true,
+                            text: 'Saldo Acumulado'
+                        }
+                    }
                 },
                 plugins: {
-                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, padding: 10 } },
-                    tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: ${formatCurrency(c.raw)}` } }
+                    legend: { 
+                        position: 'top', 
+                        align: 'start', 
+                        labels: { 
+                            usePointStyle: true, 
+                            padding: 15 
+                        } 
+                    },
+                    tooltip: { 
+                        mode: 'index', 
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 61, 117, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        callbacks: { 
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = formatCurrency(context.parsed.y);
+                                return `${label}: ${value}`;
+                            },
+                            afterBody: function(tooltipItems) {
+                                const recebimentos = tooltipItems.find(item => item.dataset.label === 'Recebimentos Previstos')?.parsed.y || 0;
+                                const pagamentos = Math.abs(tooltipItems.find(item => item.dataset.label === 'Pagamentos Previstos')?.parsed.y || 0);
+                                const fluxoLiquido = recebimentos - pagamentos;
+                                return [
+                                    '',
+                                    `Fluxo Líquido: ${formatCurrency(fluxoLiquido)}`
+                                ];
+                            }
+                        } 
+                    }
                 }
             }
         });
@@ -404,13 +812,13 @@ document.addEventListener('DOMContentLoaded', () => {
             saldoAcumulado += saldoDia;
 
             const tr = document.createElement('tr');
-            tr.className = 'border-b border-gray-100 hover:bg-blue-50 transition-colors';
+            tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
             tr.innerHTML = `
                 <td class="p-2 text-gray-600">${formatDate(new Date(dateStr + 'T00:00:00'))}</td>
-                <td class="p-2 text-right text-green-600 font-medium">${formatCurrency(dayData.receber)}</td>
-                <td class="p-2 text-right text-red-600 font-medium">${formatCurrency(dayData.pagar)}</td>
-                <td class="p-2 text-right font-medium ${saldoDia < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(saldoDia)}</td>
-                <td class="p-2 text-right font-semibold text-gray-800">${formatCurrency(saldoAcumulado)}</td>
+                <td class="p-2 text-right text-gray-800 font-medium">${formatCurrency(dayData.receber)}</td>
+                <td class="p-2 text-right text-gray-800 font-medium">${formatCurrency(dayData.pagar)}</td>
+                <td class="p-2 text-right font-medium ${saldoDia < 0 ? 'text-gray-800' : 'text-gray-900'}">${formatCurrency(saldoDia)}</td>
+                <td class="p-2 text-right font-semibold text-gray-900">${formatCurrency(saldoAcumulado)}</td>
             `;
             fragment.appendChild(tr);
         });
@@ -428,19 +836,37 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     config.setupEventListeners = (app) => {
-        app.config.dom.internalToggle.addEventListener('change', e => { 
-            app.applyFilter('includeInternal', e.target.checked); 
-        });
-        app.config.dom.clearFiltersBtn.addEventListener('click', app.clearFilters);
-        app.config.dom.projectionPeriodFilter.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                app.config.dom.projectionPeriodFilter.querySelector('.active').classList.remove('active');
-                e.target.classList.add('active');
-                const filteredData = app.config.getFilteredData(app.rawData, app.activeFilters);
-                renderChart(filteredData, app);
-                renderProjectedBalanceChart(filteredData, app);
-            }
-        });
+
+
+        if (app.config.dom.internalToggle) {
+            app.config.dom.internalToggle.addEventListener('change', e => { 
+                app.applyFilter('includeInternal', e.target.checked); 
+            });
+        }
+        
+        if (app.config.dom.clearFiltersBtn) {
+            app.config.dom.clearFiltersBtn.addEventListener('click', app.clearFilters);
+        }
+        
+        if (app.config.dom.projectionPeriodFilter) {
+            app.config.dom.projectionPeriodFilter.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' && e.target.classList.contains('filter-btn-period')) {
+                    // Remove active class from all period buttons
+                    app.config.dom.projectionPeriodFilter.querySelectorAll('.filter-btn-period').forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.add('text-gray-600');
+                    });
+                    
+                    // Add active class to clicked button
+                    e.target.classList.add('active');
+                    e.target.classList.remove('text-gray-600');
+                    
+                    const filteredData = app.config.getFilteredData(app.rawData, app.activeFilters);
+                    renderChart(filteredData, app);
+                    renderProjectedBalanceChart(filteredData, app);
+                }
+            });
+        }
     };
 
     const init = () => {
