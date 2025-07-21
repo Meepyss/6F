@@ -125,7 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cobranca: 'all',
         },
         dom: {
-            agingFilter: document.getElementById('aging-filter'),
+            customRangeMin: document.getElementById('custom-range-min'),
+            customRangeMax: document.getElementById('custom-range-max'),
+            applyCustomRange: document.getElementById('apply-custom-range'),
+            clearAgingFilter: document.getElementById('clear-aging-filter'),
             companyFilterContainer: document.getElementById('company-filter-container'),
             statusFilterContainer: document.getElementById('status-filter-container'),
             cobrancaFilter: document.getElementById('cobranca-filter'),
@@ -163,8 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cobrancaMatch = activeFilters.cobranca === 'all' || item.tipoCobranca === activeFilters.cobranca;
                 let agingMatch = true;
                 if (activeFilters.agingRange !== 'all' && item.status === 'Vencido' && item.daysOverdue > 0) {
-                    const [min, max] = activeFilters.agingRange.replace('+', '-9999').split('-');
-                    agingMatch = item.daysOverdue >= parseInt(min) && item.daysOverdue <= parseInt(max);
+                    const [min, max] = activeFilters.agingRange.split('-');
+                    const minDays = parseInt(min) || 0;
+                    const maxDays = max === 'Infinity' ? Infinity : parseInt(max);
+                    agingMatch = item.daysOverdue >= minDays && item.daysOverdue <= maxDays;
                 }
                 return companyMatch && customerMatch && statusMatch && internalMatch && agingMatch && cobrancaMatch;
             });
@@ -332,10 +337,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         ],
         setupEventListeners: (app) => {
-            app.config.dom.agingFilter.addEventListener('click', e => { if (e.target.tagName === 'BUTTON') { app.config.dom.agingFilter.querySelector('.active').classList.remove('active'); e.target.classList.add('active'); app.applyFilter('agingRange', e.target.dataset.range); } });
+            // Custom range apply button
+            app.config.dom.applyCustomRange.addEventListener('click', () => {
+                const minValue = parseInt(app.config.dom.customRangeMin.value) || 0;
+                const maxValue = app.config.dom.customRangeMax.value ? parseInt(app.config.dom.customRangeMax.value) : 'Infinity';
+                const customRange = `${minValue}-${maxValue}`;
+                app.applyFilter('agingRange', customRange);
+            });
+            
+            // Clear aging filter button
+            app.config.dom.clearAgingFilter.addEventListener('click', () => {
+                app.config.dom.customRangeMin.value = '';
+                app.config.dom.customRangeMax.value = '';
+                app.applyFilter('agingRange', 'all');
+            });
+            
+            // Allow Enter key to apply custom range
+            [app.config.dom.customRangeMin, app.config.dom.customRangeMax].forEach(input => {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        app.config.dom.applyCustomRange.click();
+                    }
+                });
+            });
+            
             app.config.dom.cobrancaFilter.addEventListener('change', e => { app.applyFilter('cobranca', e.target.value); });
             app.config.dom.internalToggle.addEventListener('change', e => { app.applyFilter('includeInternal', e.target.checked); });
-            app.config.dom.clearFiltersBtn.addEventListener('click', app.clearFilters);
+            app.config.dom.clearFiltersBtn.addEventListener('click', () => {
+                app.config.dom.customRangeMin.value = '';
+                app.config.dom.customRangeMax.value = '';
+                app.clearFilters();
+            });
             app.config.dom.drilldownModalCloseBtn.addEventListener('click', () => {
                 const modal = app.config.dom.drilldownModal;
                 modal.classList.add('opacity-0');

@@ -35,15 +35,15 @@
 
         <!-- Painel de Filtros Globais -->
         <div class="bg-white p-4 rounded-xl shadow-md mb-2 flex flex-wrap items-center gap-4 lg:gap-6">
+            <!-- Filtro de Período de Atraso -->
             <div class="flex items-center gap-2">
-                <label class="font-semibold text-sm">Faixas de Atraso:</label>
-                <div id="aging-filter" class="flex items-center bg-gray-100 rounded-lg p-1">
-                    <button data-range="all" class="filter-btn active px-3 py-1 text-sm rounded-md">Todas</button>
-                    <button data-range="0-10" class="filter-btn px-3 py-1 text-sm rounded-md">Até 10 dias</button>
-                    <button data-range="11-30" class="filter-btn px-3 py-1 text-sm rounded-md">11 a 30 dias</button>
-                    <button data-range="31-60" class="filter-btn px-3 py-1 text-sm rounded-md">31 a 60 dias</button>
-                    <button data-range="61+" class="filter-btn px-3 py-1 text-sm rounded-md">Acima de 60 dias</button>
-                </div>
+                <label class="font-semibold text-sm">Período de Atraso:</label>
+                <input type="number" id="custom-range-min" placeholder="De" min="0" class="w-16 p-2 border border-gray-300 rounded text-sm">
+                <span class="text-sm">a</span>
+                <input type="number" id="custom-range-max" placeholder="Até" min="0" class="w-16 p-2 border border-gray-300 rounded text-sm">
+                <span class="text-sm">dias</span>
+                <button id="apply-custom-range" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">Aplicar</button>
+                <button id="clear-aging-filter" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm">Limpar</button>
             </div>
             <!-- Filtro de Empresa (Custom) -->
             <div class="flex items-center gap-2">
