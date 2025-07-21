@@ -1,17 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let rawData = [];
     let startDate = new Date();
     let endDate = new Date();
     const initialBalance = 50000;
-
-    const companyFilter = document.getElementById('company-filter');
-    const internalToggle = document.getElementById('internal-toggle');
-    const kpiContainer = document.getElementById('kpi-container');
-    const alertsContainer = document.getElementById('alerts-container');
-    const calendarBody = document.getElementById('financial-calendar-body');
-    const chartCanvas = document.getElementById('cashflow-chart');
-    const projectedBalanceCanvas = document.getElementById('projected-balance-chart');
-    const projectionPeriodFilter = document.getElementById('projection-period-filter');
     let cashflowChartInstance = null;
     let projectedBalanceChartInstance = null;
 
@@ -19,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatDate = (date) => date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
     const generateMockData = () => {
-        const companies = ['Alpha', 'Beta'];
+        const companies = ['6F', '8F', 'PEQUETITA'];
         const data = [];
         const today = new Date(2025, 6, 4);
 
@@ -108,18 +98,40 @@ document.addEventListener('DOMContentLoaded', () => {
         return data.map(item => ({...item, date: new Date(item.date + 'T00:00:00')}));
     };
 
-    const getFilteredData = () => {
-        const company = companyFilter.value;
-        const includeInternal = internalToggle.checked;
-
-        return rawData.filter(item => {
-            const companyMatch = company === 'todos' || item.company === company;
-            const internalMatch = includeInternal || !item.isInternal;
-            return companyMatch && internalMatch;
-        });
+    const config = {
+        initialFilters: {
+            empresas: [],
+            includeInternal: false
+        },
+        dom: {
+            empresaFilterContainer: document.getElementById('empresa-filter-container'),
+            internalToggle: document.getElementById('internal-toggle'),
+            kpiContainer: document.getElementById('kpi-container'),
+            alertsContainer: document.getElementById('alerts-container'),
+            calendarBody: document.getElementById('financial-calendar-body'),
+            chartCanvas: document.getElementById('cashflow-chart'),
+            projectedBalanceCanvas: document.getElementById('projected-balance-chart'),
+            projectionPeriodFilter: document.getElementById('projection-period-filter'),
+            activeFiltersContainer: document.getElementById('active-filters-container'),
+            clearFiltersBtn: document.getElementById('clear-filters-btn')
+        },
+        allEmpresas: ["6F", "8F", "PEQUETITA"],
+        filterPillDefinitions: [
+            { type: 'empresas', label: 'Empresa' }
+        ],
+        customSelects: [
+            { type: 'Empresas', options: ["6F", "8F", "PEQUETITA"], filterKey: 'empresas', containerId: 'empresa-filter-container' }
+        ],
+        getFilteredData: (rawData, activeFilters) => {
+            return rawData.filter(item => {
+                const empresaMatch = activeFilters.empresas.length === 0 || activeFilters.empresas.includes(item.company);
+                const internalMatch = activeFilters.includeInternal || !item.isInternal;
+                return empresaMatch && internalMatch;
+            });
+        }
     };
 
-    const renderKPIs = (filteredData) => {
+    const renderKPIs = (filteredData, app) => {
         const totalReceber = filteredData.filter(d => d.type === 'receber').reduce((sum, d) => sum + d.previstoValue, 0);
         const totalPagar = filteredData.filter(d => d.type === 'pagar').reduce((sum, d) => sum + d.previstoValue, 0);
         const realizadoTotal = filteredData.reduce((sum, d) => sum + (d.type === 'receber' ? d.realizadoValue : -d.realizadoValue), 0);
@@ -138,79 +150,120 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Desvio (Prev. x Real.)', value: `${desvio.toFixed(2)}%`, icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h15.75c.621 0 1.125.504 1.125 1.125v6.75C21 20.496 20.496 21 19.875 21H4.125A1.125 1.125 0 013 19.875v-6.75zM12 3v9' },
         ];
 
-        kpiContainer.innerHTML = kpis.map(kpi => `
-            <div class="bg-white p-4 rounded-xl shadow-sm">
-                <div class="flex items-center justify-between text-gray-400">
-                    <span class="text-sm font-semibold">${kpi.label}</span>
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${kpi.icon}"></path></svg>
+        app.config.dom.kpiContainer.innerHTML = kpis.map(kpi => `
+            <div class="bg-white rounded-lg shadow-sm border p-3">
+                <div class="flex items-center justify-between text-gray-400 mb-1">
+                    <span class="text-xs font-medium text-gray-600">${kpi.label}</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${kpi.icon}"></path></svg>
                 </div>
-                <p class="text-2xl font-bold text-gray-800 mt-2">${kpi.value}</p>
+                <p class="text-lg font-bold text-gray-800">${kpi.value}</p>
             </div>
         `).join('');
     };
 
-    const renderAlerts = () => {
-        const overdueItems = rawData.filter(d => d.isOverdue);
+    const renderAlerts = (filteredData, app) => {
+        const overdueItems = filteredData.filter(d => d.isOverdue);
         const overdueReceivables = overdueItems.filter(d => d.type === 'receber');
         const overduePayables = overdueItems.filter(d => d.type === 'pagar');
 
         const uniqueOverdueClients = new Set(overdueReceivables.map(d => d.company || 'Cliente Desconhecido')).size;
         const uniqueOverdueSuppliers = new Set(overduePayables.map(d => d.company || 'Fornecedor Desconhecido')).size;
 
-        alertsContainer.innerHTML = `
-            <h3 class="font-bold text-gray-800">Alertas Rápidos</h3>
-            <div class="flex items-center justify-between p-2 rounded-lg bg-red-50 text-red-700">
-                <span class="font-medium text-sm">Contas Vencidas</span>
-                <span class="font-bold text-lg">${overdueItems.length}</span>
-            </div>
-            <div class="flex items-center justify-between p-2 rounded-lg bg-yellow-50 text-yellow-700">
-                <span class="font-medium text-sm">Clientes em Atraso</span>
-                <span class="font-bold text-lg">${uniqueOverdueClients}</span>
-            </div>
-             <div class="flex items-center justify-between p-2 rounded-lg bg-orange-50 text-orange-700">
-                <span class="font-medium text-sm">Fornecedores em Atraso</span>
-                <span class="font-bold text-lg">${uniqueOverdueSuppliers}</span>
+        app.config.dom.alertsContainer.innerHTML = `
+            <h3 class="font-semibold text-base text-gray-800 mb-2">Alertas</h3>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between p-2 rounded-lg bg-red-50 text-red-700">
+                    <span class="font-medium text-xs">Contas Vencidas</span>
+                    <span class="font-bold text-sm">${overdueItems.length}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-yellow-50 text-yellow-700">
+                    <span class="font-medium text-xs">Clientes em Atraso</span>
+                    <span class="font-bold text-sm">${uniqueOverdueClients}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-orange-50 text-orange-700">
+                    <span class="font-medium text-xs">Fornecedores em Atraso</span>
+                    <span class="font-bold text-sm">${uniqueOverdueSuppliers}</span>
+                </div>
             </div>
         `;
     };
 
-    const renderChart = (filteredData) => {
+    const renderChart = (filteredData, app) => {
+        const period = app.config.dom.projectionPeriodFilter.querySelector('.active').dataset.period;
         const today = new Date();
         today.setHours(23, 59, 59, 999);
         const pastData = filteredData.filter(item => new Date(item.date) < today);
 
-        const dailyData = {};
+        const periodData = {};
         const chartEndDate = new Date(Math.min(endDate, today));
 
+        // Função para gerar chave do período baseado no filtro selecionado
+        const getPeriodKey = (date) => {
+            if (period === 'daily') {
+                return date.toISOString().split('T')[0];
+            } else if (period === 'weekly') {
+                const startOfWeek = new Date(date);
+                startOfWeek.setDate(date.getDate() - date.getDay());
+                return startOfWeek.toISOString().split('T')[0];
+            } else { // monthly
+                return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+            }
+        };
+
+        // Inicializar estrutura de dados baseada no período
         if (startDate <= chartEndDate) {
-            for (let d = new Date(startDate); d <= chartEndDate; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split('T')[0];
-                dailyData[dateStr] = { previsto: 0, realizado: 0 };
+            let currentDate = new Date(startDate);
+            while (currentDate <= chartEndDate) {
+                const periodKey = getPeriodKey(currentDate);
+                if (!periodData[periodKey]) {
+                    periodData[periodKey] = { previsto: 0, realizado: 0 };
+                }
+                
+                // Avançar para o próximo período
+                if (period === 'daily') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } else if (period === 'weekly') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                } else { // monthly
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
             }
         }
 
+        // Agrupar dados por período
         pastData.forEach(item => {
             const itemDate = new Date(item.date);
             if (itemDate >= startDate && itemDate <= chartEndDate) {
-                const dateStr = itemDate.toISOString().split('T')[0];
-                if (dailyData[dateStr]) {
+                const periodKey = getPeriodKey(itemDate);
+                if (periodData[periodKey]) {
                     const multiplier = item.type === 'receber' ? 1 : -1;
-                    dailyData[dateStr].previsto += item.previstoValue * multiplier;
-                    dailyData[dateStr].realizado += item.realizadoValue * multiplier;
+                    periodData[periodKey].previsto += item.previstoValue * multiplier;
+                    periodData[periodKey].realizado += item.realizadoValue * multiplier;
                 }
             }
         });
 
-        const labels = Object.keys(dailyData);
-        const previstoData = labels.map(date => dailyData[date].previsto);
-        const realizadoData = labels.map(date => dailyData[date].realizado);
-        const diferencaData = labels.map((date, index) => realizadoData[index] - previstoData[index]);
+        const labels = Object.keys(periodData).sort();
+        const previstoData = labels.map(periodKey => periodData[periodKey].previsto);
+        const realizadoData = labels.map(periodKey => periodData[periodKey].realizado);
+        const diferencaData = labels.map((periodKey, index) => realizadoData[index] - previstoData[index]);
 
         if (cashflowChartInstance) {
             cashflowChartInstance.destroy();
         }
 
-        cashflowChartInstance = new Chart(chartCanvas, {
+        // Configurar unidade de tempo baseada no período
+        let timeUnit = 'day';
+        let displayFormat = 'dd/MM';
+        if (period === 'weekly') {
+            timeUnit = 'week';
+            displayFormat = 'dd/MM';
+        } else if (period === 'monthly') {
+            timeUnit = 'month';
+            displayFormat = 'MMM/yy';
+        }
+
+        cashflowChartInstance = new Chart(app.config.dom.chartCanvas, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -222,25 +275,26 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
-                    x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd/MM' } }, grid: { display: false }, stacked: false },
+                    x: { type: 'time', time: { unit: timeUnit, displayFormats: { [timeUnit]: displayFormat } }, grid: { display: false }, stacked: false },
                     y: { grid: { color: '#e5e7eb' }, ticks: { callback: value => formatCurrency(value) }, stacked: false }
                 },
                 plugins: {
-                    legend: { position: 'top', align: 'end' },
+                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, padding: 10 } },
                     tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: ${formatCurrency(c.raw)}` } }
                 }
             }
         });
     };
 
-    const renderProjectedBalanceChart = () => {
-        const period = projectionPeriodFilter.querySelector('.active').dataset.period;
+    const renderProjectedBalanceChart = (filteredData, app) => {
+        const period = app.config.dom.projectionPeriodFilter.querySelector('.active').dataset.period;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const pastData = rawData.filter(item => new Date(item.date) < today);
-        const futureData = rawData.filter(item => new Date(item.date) >= today);
+        const pastData = app.rawData.filter(item => new Date(item.date) < today);
+        const futureData = app.rawData.filter(item => new Date(item.date) >= today);
 
         const currentBalance = pastData.reduce((balance, item) => {
             return balance + (item.type === 'receber' ? item.realizadoValue : -item.realizadoValue);
@@ -295,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (period === 'weekly') timeUnit = 'week';
         if (period === 'monthly') timeUnit = 'month';
 
-        projectedBalanceChartInstance = new Chart(projectedBalanceCanvas, {
+        projectedBalanceChartInstance = new Chart(app.config.dom.projectedBalanceCanvas, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -314,14 +368,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     'y-saldo': { position: 'right', grid: { display: false }, ticks: { callback: value => formatCurrency(value) } }
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, padding: 10 } },
                     tooltip: { mode: 'index', intersect: false, callbacks: { label: c => `${c.dataset.label}: ${formatCurrency(c.raw)}` } }
                 }
             }
         });
     };
 
-    const renderCalendar = (filteredData) => {
+    const renderCalendar = (filteredData, app) => {
         const dailyAggregates = {};
         let saldoAcumulado = initialBalance;
 
@@ -341,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        calendarBody.innerHTML = '';
+        app.config.dom.calendarBody.innerHTML = '';
         const fragment = document.createDocumentFragment();
 
         Object.keys(dailyAggregates).forEach(dateStr => {
@@ -350,37 +404,41 @@ document.addEventListener('DOMContentLoaded', () => {
             saldoAcumulado += saldoDia;
 
             const tr = document.createElement('tr');
-            tr.className = 'border-b border-gray-200';
+            tr.className = 'border-b border-gray-100 hover:bg-blue-50 transition-colors';
             tr.innerHTML = `
-                <td class="p-2">${formatDate(new Date(dateStr + 'T00:00:00'))}</td>
-                <td class="p-2 text-right relative"><div class="data-bar bg-blue-500" style="width: ${((dayData.receber / maxReceber) * 100) || 0}%"></div><span class="value-text">${formatCurrency(dayData.receber)}</span></td>
-                <td class="p-2 text-right relative"><div class="data-bar bg-red-500" style="width: ${((dayData.pagar / maxPagar) * 100) || 0}%"></div><span class="value-text">${formatCurrency(dayData.pagar)}</span></td>
+                <td class="p-2 text-gray-600">${formatDate(new Date(dateStr + 'T00:00:00'))}</td>
+                <td class="p-2 text-right text-green-600 font-medium">${formatCurrency(dayData.receber)}</td>
+                <td class="p-2 text-right text-red-600 font-medium">${formatCurrency(dayData.pagar)}</td>
                 <td class="p-2 text-right font-medium ${saldoDia < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(saldoDia)}</td>
                 <td class="p-2 text-right font-semibold text-gray-800">${formatCurrency(saldoAcumulado)}</td>
             `;
             fragment.appendChild(tr);
         });
 
-        calendarBody.appendChild(fragment);
+        app.config.dom.calendarBody.appendChild(fragment);
     };
 
-    const updateDashboard = () => {
-        const filteredData = getFilteredData();
-        renderKPIs(filteredData);
-        renderAlerts();
-        renderChart(filteredData);
-        renderProjectedBalanceChart();
-        renderCalendar(filteredData);
-    };
+    // Adicionar as funções de renderização ao config
+    config.renderFunctions = [
+        renderKPIs,
+        renderAlerts,
+        renderChart,
+        renderProjectedBalanceChart,
+        renderCalendar
+    ];
 
-    const setupEventListeners = () => {
-        companyFilter.addEventListener('change', updateDashboard);
-        internalToggle.addEventListener('change', updateDashboard);
-        projectionPeriodFilter.addEventListener('click', (e) => {
+    config.setupEventListeners = (app) => {
+        app.config.dom.internalToggle.addEventListener('change', e => { 
+            app.applyFilter('includeInternal', e.target.checked); 
+        });
+        app.config.dom.clearFiltersBtn.addEventListener('click', app.clearFilters);
+        app.config.dom.projectionPeriodFilter.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') {
-                projectionPeriodFilter.querySelector('.active').classList.remove('active');
+                app.config.dom.projectionPeriodFilter.querySelector('.active').classList.remove('active');
                 e.target.classList.add('active');
-                renderProjectedBalanceChart();
+                const filteredData = app.config.getFilteredData(app.rawData, app.activeFilters);
+                renderChart(filteredData, app);
+                renderProjectedBalanceChart(filteredData, app);
             }
         });
     };
@@ -390,9 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startDate = new Date();
         startDate.setDate(endDate.getDate() - 30);
         
-        rawData = generateMockData();
-        setupEventListeners();
-        updateDashboard();
+        const app = new DashboardApp(config);
+        app.init(generateMockData());
     };
 
     init();

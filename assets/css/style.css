@@ -17,3 +17,98 @@ body { font-family: 'Segoe UI', 'Inter', sans-serif; background-color: #f3f4f6; 
 .filter-pill { display: inline-flex; align-items: center; background-color: #e5e7eb; border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
 .filter-pill button { margin-left: 0.5rem; color: #9ca3af; background: transparent; border: none; cursor: pointer; }
 .filter-pill button:hover { color: #374151; }
+
+/* Estilos para interatividade dos gráficos */
+.chart-interactive {
+    position: relative;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.chart-interactive:hover {
+    opacity: 0.9;
+}
+
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+/* Indicador de filtro cruzado ativo */
+.cross-filter-active {
+    border: 2px solid #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Estilos para o modal de drill-through */
+.drill-through-modal {
+    backdrop-filter: blur(4px);
+}
+
+.drill-through-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Animações para feedback visual */
+@keyframes pulse-blue {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+}
+
+.chart-clicked {
+    animation: pulse-blue 0.6s ease-out;
+}
+
+/* Estilos para indicadores de interatividade */
+.interactive-hint {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chart-card:hover .interactive-hint {
+    opacity: 1;
+}
+
+/* Melhorias para tabelas com drill-through */
+.table-row-clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.table-row-clickable:hover {
+    background-color: #f8fafc;
+}
+
+/* Estilos para pills de filtro ativo */
+.filter-pill-aging {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fbbf24;
+}
+
+.filter-pill-cross {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+}

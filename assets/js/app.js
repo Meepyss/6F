@@ -105,10 +105,18 @@ class DashboardApp {
         optionsDiv.querySelectorAll('input').forEach(input => {
             input.onchange = (e) => this.handleCheckboxChange(e, filterKey);
         });
+
+        // Fechar dropdown ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                optionsDiv.classList.remove('show');
+            }
+        });
     }
 
     updateCustomSelect(type, filterKey) {
-        const container = this.config.dom[`${filterKey}FilterContainer`];
+        const containerKey = this.config.customSelects.find(s => s.filterKey === filterKey)?.containerId;
+        const container = containerKey ? document.getElementById(containerKey) : null;
         if (!container) return;
 
         const selectedCount = this.activeFilters[filterKey].length;
@@ -195,7 +203,10 @@ class DashboardApp {
         }
         if (this.config.customSelects) {
             this.config.customSelects.forEach(select => {
-                this.createCustomSelect(select.type, select.options, select.filterKey, this.config.dom[select.containerId]);
+                const container = document.getElementById(select.containerId);
+                if (container) {
+                    this.createCustomSelect(select.type, select.options, select.filterKey, container);
+                }
             });
         }
 
