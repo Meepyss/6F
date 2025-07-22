@@ -8,7 +8,36 @@ document.addEventListener('DOMContentLoaded', () => {
         natureza: [],
         tipoCobranca: [],
         empresa: [],
-        periodo: ''
+        dataInicio: '',
+        dataFim: ''
+    };
+
+    // Função para converter data do formato YYYY-MM-DD para DD/MM/YYYY para exibição
+    const formatarDataExibicao = (dataString) => {
+        if (!dataString) return '';
+        const data = new Date(dataString + 'T00:00:00');
+        return data.toLocaleDateString('pt-BR');
+    };
+
+    // Função para converter data DD/MM/YYYY para objeto Date
+    const parseDataBR = (dataString) => {
+        if (!dataString) return null;
+        const [dia, mes, ano] = dataString.split('/');
+        return new Date(ano, mes - 1, dia);
+    };
+
+    // Função para verificar se uma data está dentro do range
+    const dataEstaNoRange = (dataItem, dataInicio, dataFim) => {
+        if (!dataInicio && !dataFim) return true;
+        
+        const dataItemObj = new Date(dataItem);
+        const dataInicioObj = dataInicio ? new Date(dataInicio + 'T00:00:00') : null;
+        const dataFimObj = dataFim ? new Date(dataFim + 'T23:59:59') : null;
+        
+        if (dataInicioObj && dataItemObj < dataInicioObj) return false;
+        if (dataFimObj && dataItemObj > dataFimObj) return false;
+        
+        return true;
     };
 
     const formatarMoeda = (valor) => {
@@ -120,9 +149,14 @@ document.addEventListener('DOMContentLoaded', () => {
             dados = dados.filter(item => filtrosAtivos.empresa.includes(item.empresa));
         }
         
-        // Aplicar filtro de período
-        if (filtrosAtivos.periodo) {
-            dados = dados.filter(item => item.periodo === filtrosAtivos.periodo);
+        // Aplicar filtro de período por range de datas
+        if (filtrosAtivos.dataInicio || filtrosAtivos.dataFim) {
+            dados = dados.filter(item => {
+                // Converter período YYYY-MM para uma data do primeiro dia do mês
+                const [ano, mes] = item.periodo.split('-');
+                const dataItem = `${ano}-${mes}-01`;
+                return dataEstaNoRange(dataItem, filtrosAtivos.dataInicio, filtrosAtivos.dataFim);
+            });
         }
         
         return dados;
@@ -520,13 +554,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Pill para filtro de período
-        if (filtrosAtivos.periodo) {
-            const [ano, mes] = filtrosAtivos.periodo.split('-');
-            const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        if (filtrosAtivos.dataInicio || filtrosAtivos.dataFim) {
+            const dataInicio = filtrosAtivos.dataInicio ? formatarDataExibicao(filtrosAtivos.dataInicio) : '';
+            const dataFim = filtrosAtivos.dataFim ? formatarDataExibicao(filtrosAtivos.dataFim) : '';
+            
+            let label = '';
+            if (dataInicio && dataFim) {
+                label = `${dataInicio} a ${dataFim}`;
+            } else if (dataInicio) {
+                label = `A partir de ${dataInicio}`;
+            } else if (dataFim) {
+                label = `Até ${dataFim}`;
+            }
+            
             pills.push({
                 tipo: 'periodo',
-                valor: filtrosAtivos.periodo,
-                label: `${meses[parseInt(mes) - 1]} ${ano}`,
+                valor: `${dataInicio} a ${dataFim}`,
+                label: label,
                 classe: 'filter-pill'
             });
         }
@@ -552,27 +596,44 @@ document.addEventListener('DOMContentLoaded', () => {
         // Gerar dados mockados
         dadosOriginais = gerarDadosMockados();
         
+        // Inicializar filtros de data com valores padrão
+        const dataInicioInput = document.getElementById('data-inicio-filter');
+        const dataFimInput = document.getElementById('data-fim-filter');
+        if (dataInicioInput && dataInicioInput.value) {
+            filtrosAtivos.dataInicio = dataInicioInput.value;
+        }
+        if (dataFimInput && dataFimInput.value) {
+            filtrosAtivos.dataFim = dataFimInput.value;
+        }
+        
         // Configurar filtros de status
         document.getElementById('filtro-abertas')?.addEventListener('click', () => alternarFiltro('em-aberto'));
         document.getElementById('filtro-vencidas')?.addEventListener('click', () => alternarFiltro('recebidas'));
         document.getElementById('filtro-todas-receber')?.addEventListener('click', () => alternarFiltro('todas'));
 
-        // Configurar filtro de período
-        document.getElementById('periodo-filter')?.addEventListener('change', (e) => {
-            filtrosAtivos.periodo = e.target.value;
+        // Configurar filtros de data
+        document.getElementById('data-inicio-filter')?.addEventListener('change', (e) => {
+            filtrosAtivos.dataInicio = e.target.value;
+            atualizarVisualizacoes();
+        });
+        
+        document.getElementById('data-fim-filter')?.addEventListener('change', (e) => {
+            filtrosAtivos.dataFim = e.target.value;
             atualizarVisualizacoes();
         });
 
         // Configurar botão limpar filtros
         document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
-            filtrosAtivos = { natureza: [], tipoCobranca: [], empresa: [], periodo: '' };
+            filtrosAtivos = { natureza: [], tipoCobranca: [], empresa: [], dataInicio: '', dataFim: '' };
             
             // Limpar checkboxes
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             
-            // Limpar select de período
-            const periodoSelect = document.getElementById('periodo-filter');
-            if (periodoSelect) periodoSelect.value = '';
+            // Limpar campos de data
+            const dataInicioInput = document.getElementById('data-inicio-filter');
+            const dataFimInput = document.getElementById('data-fim-filter');
+            if (dataInicioInput) dataInicioInput.value = '';
+            if (dataFimInput) dataFimInput.value = '';
             
             // Atualizar textos dos dropdowns
             ['natureza-filter-container', 'cobranca-filter-container', 'company-filter-container'].forEach(id => {
@@ -620,9 +681,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.removerFiltro = (tipo, valor) => {
         if (tipo === 'periodo') {
-            filtrosAtivos.periodo = '';
-            const periodoSelect = document.getElementById('periodo-filter');
-            if (periodoSelect) periodoSelect.value = '';
+            filtrosAtivos.dataInicio = '';
+            filtrosAtivos.dataFim = '';
+            const dataInicioInput = document.getElementById('data-inicio-filter');
+            const dataFimInput = document.getElementById('data-fim-filter');
+            if (dataInicioInput) dataInicioInput.value = '';
+            if (dataFimInput) dataFimInput.value = '';
         } else if (Array.isArray(filtrosAtivos[tipo])) {
             filtrosAtivos[tipo] = filtrosAtivos[tipo].filter(v => v !== valor);
             

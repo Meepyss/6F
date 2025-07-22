@@ -3,51 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Financeiro - Fluxo de Saídas</title>
+    <title>Painel Financeiro - Fluxo de Entradas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+        <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        .dashboard-theme {
-            --primary-color: #003D75;
-            --primary-light: #A4C4E0;
-            --primary-dark: #002a52;
-        }
-        .bg-primary { background-color: var(--primary-color); }
-        .bg-primary-light { background-color: var(--primary-light); }
-        .text-primary { color: var(--primary-color); }
-        .border-primary { border-color: var(--primary-color); }
-        
-        /* Estilos melhorados para botões de filtro */
-        .filter-btn-group button {
-            position: relative;
+        .filter-btn-abertas,
+        .filter-btn-vencidas,
+        .filter-btn-todas-receber {
             transition: all 0.2s ease-in-out;
-            border: none;
             cursor: pointer;
-            color: #6b7280;
         }
         
-        .filter-btn-group button:hover:not(.active) {
-            background-color: var(--gray-100);
-            color: var(--gray-800);
+        .filter-btn-abertas:hover:not(.active),
+        .filter-btn-vencidas:hover:not(.active),
+        .filter-btn-todas-receber:hover:not(.active) {
+            background-color: var(--gray-100) !important;
+            color: var(--primary-dark) !important;
+        }
+        
+        .filter-btn-abertas.active,
+        .filter-btn-vencidas.active,
+        .filter-btn-todas-receber.active {
+            background-color: var(--primary-dark) !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(0, 61, 117, 0.2);
             transform: translateY(-1px);
         }
         
-        .filter-btn-group button.active {
-            background-color: var(--primary-dark) !important;
-            color: white !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-        
-        .filter-btn-em-aberto.active,
-        .filter-btn-pagas.active,
-        .filter-btn-todas.active {
-            background-color: var(--primary-dark) !important;
-            border-color: var(--primary-dark) !important;
-            color: white !important;
+        .filter-btn-group {
+            background-color: white;
+            border: 1px solid #e5e7eb;
         }
     </style>
 </head>
@@ -56,36 +45,36 @@
         <div class="container mx-auto px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <a class="text-xl font-bold text-gray-800" href="./index.html">Painel Financeiro</a>
+                    <a class="text-xl font-bold text-gray-800" href="./fluxo_caixa.html">Painel Financeiro</a>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="./index.html" class="text-gray-600 hover:text-primary">Fluxo de Caixa</a>
-                    <a href="./contas_a_receber_dashboard.html" class="text-gray-600 hover:text-primary">Fluxo Entradas</a>
-                    <a href="./contas_a_pagar_dashboard.html" class="text-primary font-semibold">Fluxo Saídas</a>
+                    <a href="./fluxo_caixa.html" class="text-gray-600 hover:text-primary">Fluxo de Caixa</a>
+                    <a href="./fluxo_entradas.html" class="text-primary font-semibold">Fluxo Entradas</a>
+                    <a href="./fluxo_saida.html" class="text-gray-600 hover:text-primary">Fluxo Saídas</a>
                 </div>
             </div>
         </div>
     </nav>
 
     <div class="container mx-auto p-3 lg:p-4">
-        <!-- Cabeçalho -->
+        <!-- Cabeçalho com Filtros Integrados -->
         <div class="bg-white rounded-xl shadow-sm border mb-4">
             <div class="p-4 border-b border-gray-100 bg-primary-light">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold text-primary">Fluxo Saídas</h1>
-                        <p class="text-sm text-gray-600 mt-1">Visualizar contas pagas, em aberto ou todas</p>
+                        <h1 class="text-2xl font-bold text-primary">Fluxo Entradas</h1>
+                        <p class="text-sm text-gray-600 mt-1">Visualizar valores recebidos, em aberto ou todos</p>
                     </div>
                     <div class="flex items-center gap-4">
                         <!-- Filtro Simples de Status -->
                         <div class="flex bg-white rounded-lg p-1 shadow-sm border filter-btn-group">
-                            <button id="filtro-em-aberto" class="px-3 py-2 text-xs font-medium rounded-md transition-all active filter-btn-em-aberto">
+                            <button id="filtro-abertas" class="px-3 py-2 text-xs font-medium rounded-md transition-all active filter-btn-abertas">
                                 Em Aberto
                             </button>
-                            <button id="filtro-pagas" class="px-3 py-2 text-xs font-medium rounded-md transition-all text-gray-600 filter-btn-pagas">
-                                Pagas
+                            <button id="filtro-vencidas" class="px-3 py-2 text-xs font-medium rounded-md transition-all text-gray-600 filter-btn-vencidas">
+                                Recebidas
                             </button>
-                            <button id="filtro-todas" class="px-3 py-2 text-xs font-medium rounded-md transition-all text-gray-600 filter-btn-todas">
+                            <button id="filtro-todas-receber" class="px-3 py-2 text-xs font-medium rounded-md transition-all text-gray-600 filter-btn-todas-receber">
                                 Todas
                             </button>
                         </div>
@@ -105,32 +94,26 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <div class="space-y-1">
-                        <label class="text-xs font-medium text-gray-600">Grupo Natureza</label>
+                        <label class="text-xs font-medium text-gray-600">Natureza Operação</label>
                         <div id="natureza-filter-container" class="relative"></div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-medium text-gray-600">Natureza Operação</label>
-                        <div id="natureza-operacao-filter-container" class="relative"></div>
+                        <label class="text-xs font-medium text-gray-600">Tipo Cobrança</label>
+                        <div id="cobranca-filter-container" class="relative"></div>
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-medium text-gray-600">Empresa</label>
-                        <div id="empresa-filter-container" class="relative"></div>
+                        <div id="company-filter-container" class="relative"></div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs font-medium text-gray-600">Período</label>
-                        <select id="periodo-filter" class="w-full text-xs border border-gray-300 rounded-md p-2">
-                            <option value="">Todos os períodos</option>
-                            <option value="2025-01">Janeiro 2025</option>
-                            <option value="2025-02">Fevereiro 2025</option>
-                            <option value="2025-03">Março 2025</option>
-                            <option value="2025-04">Abril 2025</option>
-                            <option value="2025-05">Maio 2025</option>
-                            <option value="2025-06">Junho 2025</option>
-                            <option value="2025-07">Julho 2025</option>
-                            <option value="2025-08">Agosto 2025</option>
-                        </select>
+                        <label class="text-xs font-medium text-gray-600">Data Início</label>
+                        <input type="date" id="data-inicio-filter" class="w-full text-xs border border-gray-300 rounded-md p-2" placeholder="Data inicial" value="2025-01-01">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-gray-600">Data Fim</label>
+                        <input type="date" id="data-fim-filter" class="w-full text-xs border border-gray-300 rounded-md p-2" placeholder="Data final" value="2025-12-31">
                     </div>
                 </div>
                 
@@ -153,7 +136,7 @@
                     <!-- Evolução dos Valores -->
                     <div class="chart-card">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-semibold text-base text-gray-800">Evolução dos Valores Pagos</h3>
+                            <h3 class="font-semibold text-base text-gray-800">Evolução dos Valores Recebidos</h3>
                             <span class="text-xs text-gray-500 bg-primary-light px-2 py-1 rounded">Comparativo YoY</span>
                         </div>
                         <div class="h-[280px]"><canvas id="evolucao-valores-chart"></canvas></div>
@@ -162,7 +145,7 @@
                     <!-- Valores por Tipo -->
                     <div class="chart-card">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-semibold text-base text-gray-800">Valores por Tipo de Despesa</h3>
+                            <h3 class="font-semibold text-base text-gray-800">Valores por Tipo de Receita</h3>
                             <span class="text-xs text-gray-500 bg-primary-light px-2 py-1 rounded">Comparativo YoY</span>
                         </div>
                         <div class="h-[280px]"><canvas id="valores-categoria-chart"></canvas></div>
@@ -172,14 +155,14 @@
                 <!-- Tabela Detalhada -->
                 <div class="bg-white rounded-xl shadow-sm border">
                     <div class="p-4 border-b border-gray-100 bg-primary-light">
-                        <h3 class="font-semibold text-base text-primary">Código e Descrição Despesa</h3>
+                        <h3 class="font-semibold text-base text-primary">Código e Descrição Receita</h3>
                     </div>
                     <div class="overflow-auto max-h-[350px]">
                         <table class="w-full text-xs">
                             <thead class="text-gray-500 bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th class="p-2 text-left font-medium w-16">Código</th>
-                                    <th class="p-2 text-left font-medium min-w-[200px]">Descrição Despesa</th>
+                                    <th class="p-2 text-left font-medium min-w-[200px]">Descrição Receita</th>
                                     <th class="p-2 text-right font-medium w-20">Janeiro</th>
                                     <th class="p-2 text-right font-medium w-20">Fevereiro</th>
                                     <th class="p-2 text-right font-medium w-20">Março</th>
@@ -196,18 +179,18 @@
                 </div>
             </div>
 
-            <!-- Coluna Lateral (1/4) - Transações Recentes -->
+            <!-- Coluna Lateral (1/4) - Recebimentos Recentes -->
             <div class="xl:col-span-1">
                 <div class="bg-white rounded-xl shadow-sm border sticky top-4">
                     <div class="p-4 border-b border-gray-100 bg-primary-light">
-                        <h3 class="font-semibold text-base text-primary">Pagamentos Realizados</h3>
+                        <h3 class="font-semibold text-base text-primary">Recebimentos Realizados</h3>
                         <p class="text-xs text-gray-600 mt-1">Últimas transações processadas</p>
                     </div>
                     <div class="overflow-auto max-h-[600px]" id="transacoes-recentes-container">
                         <!-- Lista será inserida dinamicamente -->
                     </div>
                     <div class="p-3 border-t border-gray-100 bg-gray-50 text-center">
-                        <button class="text-xs text-primary hover:text-primary-dark font-medium">Ver todos os pagamentos</button>
+                        <button class="text-xs text-primary hover:text-primary-dark font-medium">Ver todos os recebimentos</button>
                     </div>
                 </div>
             </div>
@@ -227,9 +210,9 @@
                 <table class="w-full text-sm text-left">
                     <thead class="text-gray-500 bg-gray-50 sticky top-0 z-10">
                         <tr>
-                            <th class="p-3">Fornecedor</th><th class="p-3">Documento</th><th class="p-3">Prefixo</th>
-                            <th class="p-3">Emissão</th><th class="p-3">Vencimento</th><th class="p-3 text-right">Valor Saldo</th>
-                            <th class="p-3">Grupo Natureza</th><th class="p-3">Natureza Operação</th><th class="p-3">Empresa</th>
+                            <th class="p-3">Cliente</th><th class="p-3">Documento</th><th class="p-3">Empresa</th>
+                            <th class="p-3">Emissão</th><th class="p-3">Vencimento</th><th class="p-3 text-right">Valor Total</th>
+                            <th class="p-3 text-right">Valor Saldo</th><th class="p-3">Tipo Cobrança</th><th class="p-3">Status</th>
                         </tr>
                     </thead>
                     <tbody id="drilldown-modal-table-body"></tbody>
@@ -239,4 +222,7 @@
     </div>
 
 <script src="assets/js/app.js"></script>
-<script src="assets/js/contas_a_pagar.js"></script>
+<script src="assets/js/fluxo_entradas.js"></script>
+
+</body>
+</html>

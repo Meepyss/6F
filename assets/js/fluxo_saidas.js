@@ -6,7 +6,36 @@ document.addEventListener('DOMContentLoaded', () => {
         natureza: [],
         naturezaOperacao: [],
         empresa: [],
-        periodo: ''
+        dataInicio: '',
+        dataFim: ''
+    };
+
+    // Função para converter data do formato YYYY-MM-DD para DD/MM/YYYY para exibição
+    const formatarDataExibicao = (dataString) => {
+        if (!dataString) return '';
+        const data = new Date(dataString + 'T00:00:00');
+        return data.toLocaleDateString('pt-BR');
+    };
+
+    // Função para converter data DD/MM/YYYY para objeto Date
+    const parseDataBR = (dataString) => {
+        if (!dataString) return null;
+        const [dia, mes, ano] = dataString.split('/');
+        return new Date(ano, mes - 1, dia);
+    };
+
+    // Função para verificar se uma data está dentro do range
+    const dataEstaNoRange = (dataItem, dataInicio, dataFim) => {
+        if (!dataInicio && !dataFim) return true;
+        
+        const dataItemObj = new Date(dataItem);
+        const dataInicioObj = dataInicio ? new Date(dataInicio + 'T00:00:00') : null;
+        const dataFimObj = dataFim ? new Date(dataFim + 'T23:59:59') : null;
+        
+        if (dataInicioObj && dataItemObj < dataInicioObj) return false;
+        if (dataFimObj && dataItemObj > dataFimObj) return false;
+        
+        return true;
     };
 
     // Dados simulados expandidos com categorias e comparação ano anterior
@@ -241,8 +270,23 @@ document.addEventListener('DOMContentLoaded', () => {
             dados = dados.filter(item => filtrosAtivos.empresa.includes(item.empresa));
         }
         
-        if (filtrosAtivos.periodo) {
-            dados = dados.filter(item => item.periodo === filtrosAtivos.periodo);
+        if (filtrosAtivos.dataInicio || filtrosAtivos.dataFim) {
+            dados = dados.filter(item => {
+                // Usar a data de vencimento ou pagamento para filtrar
+                let dataItem;
+                if (item.vencimento) {
+                    dataItem = item.vencimento;
+                } else if (item.dataPagamento) {
+                    dataItem = item.dataPagamento;
+                } else if (item.periodo) {
+                    // Converter período YYYY-MM para uma data do primeiro dia do mês
+                    const [ano, mes] = item.periodo.split('-');
+                    dataItem = `${ano}-${mes}-01`;
+                } else {
+                    return true; // Se não há data, mantém o item
+                }
+                return dataEstaNoRange(dataItem, filtrosAtivos.dataInicio, filtrosAtivos.dataFim);
+            });
         }
 
         return dados;
@@ -678,7 +722,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Adicionar pills dos filtros ativos
         Object.keys(filtrosAtivos).forEach(campo => {
-            if (filtrosAtivos[campo].length > 0) {
+            // Verificar se é um array e se tem elementos
+            if (Array.isArray(filtrosAtivos[campo]) && filtrosAtivos[campo].length > 0) {
                 filtrosAtivos[campo].forEach(valor => {
                     const pill = document.createElement('div');
                     pill.className = 'filter-pill';
@@ -691,12 +736,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        if (filtrosAtivos.periodo) {
+        if (filtrosAtivos.dataInicio || filtrosAtivos.dataFim) {
+            const dataInicio = filtrosAtivos.dataInicio ? formatarDataExibicao(filtrosAtivos.dataInicio) : '';
+            const dataFim = filtrosAtivos.dataFim ? formatarDataExibicao(filtrosAtivos.dataFim) : '';
+            
+            let label = '';
+            if (dataInicio && dataFim) {
+                label = `${dataInicio} a ${dataFim}`;
+            } else if (dataInicio) {
+                label = `A partir de ${dataInicio}`;
+            } else if (dataFim) {
+                label = `Até ${dataFim}`;
+            }
+            
             const pill = document.createElement('div');
             pill.className = 'filter-pill';
             pill.innerHTML = `
-                ${filtrosAtivos.periodo}
-                <button onclick="removerFiltro('periodo', '${filtrosAtivos.periodo}')">×</button>
+                ${label}
+                <button onclick="removerFiltro('periodo', '')">×</button>
             `;
             container.appendChild(pill);
         }
@@ -705,8 +762,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Função para remover filtro específico
     window.removerFiltro = (campo, valor) => {
         if (campo === 'periodo') {
-            filtrosAtivos.periodo = '';
-            document.getElementById('periodo-filter').value = '';
+            filtrosAtivos.dataInicio = '';
+            filtrosAtivos.dataFim = '';
+            const dataInicioInput = document.getElementById('data-inicio-filter');
+            const dataFimInput = document.getElementById('data-fim-filter');
+            if (dataInicioInput) dataInicioInput.value = '';
+            if (dataFimInput) dataFimInput.value = '';
         } else {
             const index = filtrosAtivos[campo].indexOf(valor);
             if (index > -1) {
@@ -739,16 +800,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função de inicialização
     const inicializar = () => {
+        // Inicializar filtros de data com valores padrão
+        const dataInicioInput = document.getElementById('data-inicio-filter');
+        const dataFimInput = document.getElementById('data-fim-filter');
+        if (dataInicioInput && dataInicioInput.value) {
+            filtrosAtivos.dataInicio = dataInicioInput.value;
+        }
+        if (dataFimInput && dataFimInput.value) {
+            filtrosAtivos.dataFim = dataFimInput.value;
+        }
+        
         // Criar dropdowns de filtro
         criarDropdownFiltro('natureza-filter-container', obterValoresUnicos('grupoNatureza'), 'natureza');
         criarDropdownFiltro('natureza-operacao-filter-container', obterValoresUnicos('naturezaOperacao'), 'naturezaOperacao');
         criarDropdownFiltro('empresa-filter-container', obterValoresUnicos('empresa'), 'empresa');
 
-        // Event listener para filtro de período
-        const periodoFilter = document.getElementById('periodo-filter');
-        if (periodoFilter) {
-            periodoFilter.addEventListener('change', (e) => {
-                filtrosAtivos.periodo = e.target.value;
+        // Event listeners para filtros de data
+        const dataInicioFilter = document.getElementById('data-inicio-filter');
+        const dataFimFilter = document.getElementById('data-fim-filter');
+        
+        if (dataInicioFilter) {
+            dataInicioFilter.addEventListener('change', (e) => {
+                filtrosAtivos.dataInicio = e.target.value;
+                atualizarVisualizacoes();
+            });
+        }
+        
+        if (dataFimFilter) {
+            dataFimFilter.addEventListener('change', (e) => {
+                filtrosAtivos.dataFim = e.target.value;
                 atualizarVisualizacoes();
             });
         }
@@ -765,7 +845,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 natureza: [],
                 naturezaOperacao: [],
                 empresa: [],
-                periodo: ''
+                dataInicio: '',
+                dataFim: ''
             };
             
             // Desmarcar todos os checkboxes
@@ -774,8 +855,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Resetar dropdowns
             document.querySelectorAll('.select-text').forEach(el => el.textContent = 'Todos');
             
-            // Resetar select de período
-            document.getElementById('periodo-filter').value = '';
+            // Limpar campos de data
+            const dataInicioInput = document.getElementById('data-inicio-filter');
+            const dataFimInput = document.getElementById('data-fim-filter');
+            if (dataInicioInput) dataInicioInput.value = '';
+            if (dataFimInput) dataFimInput.value = '';
             
             // Voltar para filtro padrão com cor correta
             alternarFiltro('em-aberto');

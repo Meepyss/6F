@@ -1,95 +1,106 @@
-# Funcionalidades Interativas do Painel Financeiro
+# Funcionalidades Interativas - Painel Financeiro
 
-## Páginas Disponíveis
+## ✅ Funcionalidades Implementadas
 
-### 1. Fluxo de Caixa (Página Principal)
-- Visão geral do fluxo de caixa com gráficos comparativos
-- Projeções futuras de recebimentos vs pagamentos
-- Calendário financeiro com alertas
-- Filtros por empresa, período e movimentações internas
+### 🔄 **Fluxo de Caixa**
+- Dashboard principal com visão geral dos movimentos financeiros
+- KPIs dinâmicos (Saldo Líquido, Valores A Receber/Pagar, PMR, PMP, Desvio Realizado)
+- Gráficos interativos de fluxo de caixa
+- Calendário financeiro detalhado
+- Alertas de contas vencidas com drill-down modal
+- Filtros por empresa e incluir/excluir transações internas
 
-### 2. Fluxo de Entradas
-- Análise temporal de recebimentos com comparação ao ano anterior
-- Distribuição por categoria de natureza
-- Visualização de valores recebidos vs em aberto
-- Filtros por status, empresa, natureza e período
+### 📈 **Fluxo de Entradas (Contas a Receber)**
+- **✨ NOVO: Filtro de Período por Range de Datas**
+  - Campos "Data Início" e "Data Fim" no formato DD/MM/YYYY
+  - Filtros flexíveis: apenas data início, apenas data fim, ou ambas
+  - Valores padrão: 01/01/2025 a 31/12/2025
+  - Pills de filtros ativos mostrando o período selecionado
+- Dashboard especializado em recebimentos
+- Filtros avançados: Natureza Operação, Tipo Cobrança, Empresa
+- Comparativo ano a ano (2024 vs 2025)
+- Gráficos de evolução temporal e por categoria
+- KPIs específicos com variações percentuais
+- Drill-down detalhado por período e categoria
+- Painel lateral com recebimentos recentes
 
-### 3. Fluxo de Saídas (Contas a Pagar)
-- Análise temporal de pagamentos vs ano anterior
-- Distribuição por categoria de natureza
-- Comparação entre contas pagas e em aberto
-- Filtros por status, empresa, natureza e período
+### 📉 **Fluxo de Saídas (Contas a Pagar)**
+- **✨ NOVO: Filtro de Período por Range de Datas**
+  - Campos "Data Início" e "Data Fim" no formato DD/MM/YYYY  
+  - Filtros flexíveis: apenas data início, apenas data fim, ou ambas
+  - Valores padrão: 01/01/2025 a 31/12/2025
+  - Pills de filtros ativos mostrando o período selecionado
+- Dashboard especializado em pagamentos
+- Filtros avançados: Grupo Natureza, Natureza Operação, Empresa
+- Comparativo ano a ano (2024 vs 2025)
+- Gráficos de evolução temporal e por categoria
+- KPIs específicos com variações percentuais
+- Drill-down detalhado por período e categoria
+- Painel lateral com pagamentos recentes
 
-## Filtro Cruzado (Cross-Filter)
+## 🎯 **Novidades da Última Atualização**
 
-### Como Funciona
-- **Clique simples**: Aplica filtro exclusivo (substitui filtros anteriores)
-- **Ctrl + Clique**: Adiciona/remove filtro (permite múltiplas seleções)
+### **Filtros de Período Flexíveis**
+- ✅ Substituição dos selects de período fixo por campos de data livres
+- ✅ Suporte a ranges parciais (só início, só fim, ou ambos)
+- ✅ Formatação automática de datas em português (DD/MM/YYYY)
+- ✅ Pills de filtros dinâmicas com descrições inteligentes:
+  - "01/01/2025 a 31/12/2025" (período completo)
+  - "A partir de 01/06/2025" (só data início)
+  - "Até 30/11/2025" (só data fim)
+- ✅ Integração com função de limpar filtros
+- ✅ Valores padrão configurados para facilitar uso inicial
 
-### Funcionalidades por Dashboard
+### **Melhorias de Navegação**
+- ✅ Links de navegação corrigidos e consistentes
+- ✅ Fluxo de navegação: Fluxo de Caixa ↔ Fluxo Entradas ↔ Fluxo Saídas
+- ✅ URLs atualizadas para os nomes corretos dos arquivos
 
-#### Fluxo de Saídas
-1. **Gráfico de Valor por Natureza**
-   - Clique nas barras para filtrar por grupo de natureza
-   - Filtra automaticamente todos os outros componentes
+## 📋 **Funcionalidades Técnicas**
 
-2. **Gráfico Temporal (Comparativo Anual)**
-   - Clique nas barras para filtrar por período específico
-   - Mostra comparação com ano anterior
+### **Filtros Inteligentes**
+- Filtros múltiplos combinados (AND logic)
+- Pills de filtros ativos com remoção individual
+- Estado de filtros persistente durante navegação
+- Contadores dinâmicos de registros filtrados
 
-#### Fluxo de Entradas
-1. **Gráfico Temporal (Comparativo Anual)**
-   - Clique nas barras para filtrar por período específico
-   - Mostra comparação com ano anterior
+### **Visualizações Interativas**
+- Charts.js para gráficos responsivos
+- Tooltips informativos com cálculos de variação
+- Gráficos de barras, linhas e combinados
+- Comparativos temporais automáticos
 
-2. **Gráfico de Valores por Tipo de Receita**
-   - Clique nas barras para filtrar por categoria de receita
-   - Filtra automaticamente todos os outros componentes
+### **Responsividade**
+- Layout adaptativo para desktop, tablet e mobile
+- Grids flexíveis com Tailwind CSS
+- Componentes colapsáveis em telas menores
+- Navegação otimizada para touch
 
-#### Fluxo de Caixa
-1. **Gráficos Interativos**
-   - Navegação entre períodos (diário, semanal, mensal)
-   - Filtros por empresa e inclusão de movimentações internas
+### **Performance**
+- Renderização eficiente de grandes datasets
+- Lazy loading de componentes visuais
+- Debounce em filtros para evitar re-renderizações excessivas
+- Cache inteligente de dados processados
 
-## Drill-Through (Detalhamento)
+## 🎨 **Design System**
 
-### Como Usar
-- **Clique direito** em qualquer gráfico para abrir o modal de detalhamento
-- O modal mostra dados específicos baseados no contexto do clique
+### **Cores Principais**
+- Primary: #003D75 (Azul corporativo)
+- Primary Light: #A4C4E0 (Azul claro)
+- Primary Dark: #002a52 (Azul escuro)
+- Success: Verde para valores positivos
+- Error: Vermelho para valores negativos
+- Warning: Amarelo para alertas
 
-### Funcionalidades do Modal
-1. **Dados Contextuais**: Mostra apenas dados relevantes ao elemento clicado
-2. **Tabela Completa**: Exibe todos os campos disponíveis
-3. **KPIs Específicos**: Calcula métricas para o subconjunto de dados
-4. **Navegação Fácil**: Botão de fechar e clique fora para sair
+### **Componentes Reutilizáveis**
+- KPI Cards com status coloridos
+- Filter Pills com ações de remoção
+- Chart Cards padronizados
+- Modal de drill-down responsivo
+- Dropdowns customizados
+- Campos de data estilizados
 
-## Indicadores Visuais
+---
 
-### Dicas de Interatividade
-- **Cursor pointer**: Indica elementos clicáveis
-- **Feedback visual**: Mudança de opacidade ao passar o mouse
-- **Botões ativos**: Destaque visual para filtros aplicados
-
-### Pills de Filtro
-- **Filtros ativos**: Mostrados como pills coloridas
-- **Remoção fácil**: Clique no "×" para remover filtro específico
-- **Botão limpar**: Remove todos os filtros de uma vez
-
-## Navegação
-- **Fluxo de Caixa**: Página principal do sistema
-- **Fluxo Entradas**: Análise de recebimentos e valores a receber
-- **Fluxo Saídas**: Análise de pagamentos e contas a pagar
-- Navegação integrada entre todas as páginas
-
-## Compatibilidade
-- Funciona em todos os navegadores modernos
-- Design responsivo para dispositivos móveis
-- Suporte a teclado (Ctrl+Click para múltipla seleção)
-- Cores neutras seguindo o padrão do projeto [[memory:3921316]]
-
-## Dicas de Uso
-1. Use Ctrl+Click para comparar múltiplas categorias
-2. Clique direito para ver detalhes sem aplicar filtros
-3. Use o botão "Limpar Filtros" para resetar todas as seleções
-4. Os filtros são aplicados em tempo real em todos os componentes
-5. Navegue entre as páginas usando o menu superior
+**Última atualização:** 22/07/2025  
+**Versão:** 2.1.0 - Filtros de Período Flexíveis
