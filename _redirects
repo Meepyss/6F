@@ -1,0 +1,13 @@
+# Netlify redirects file
+# Redireciona a raiz para o fluxo de caixa
+/  /fluxo_caixa.html  200
+
+# Redirecionamentos para URLs sem extensão (SEO friendly)
+/fluxo-caixa  /fluxo_caixa.html  200
+/fluxo-entradas  /fluxo_entradas.html  200
+/fluxo-saidas  /fluxo_saida.html  200
+/entradas  /fluxo_entradas.html  200
+/saidas  /fluxo_saida.html  200
+
+# Fallback para SPA (caso necessário no futuro)
+/*  /fluxo_caixa.html  404 
