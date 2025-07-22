@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = [];
         const today = new Date(2025, 6, 4);
 
+        // ADICIONE ESTE LOG:
+        console.log('Gerando dados mockados para o dashboard...');
+
         // Generate historical data with overdue items
         for (let i = -60; i < 0; i++) {
             const current_date = new Date(today.getTime());
@@ -95,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
+        console.log('Mock gerado:', data);
         return data.map(item => ({...item, date: new Date(item.date + 'T00:00:00')}));
     };
 
@@ -256,7 +260,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Função global para fechar o modal (disponibilizar globalmente)
-    window.closeAlertModal = closeAlertModal;
+    window.closeAlertModal = () => {
+        console.log('closeAlertModal called'); // Debug log
+        const modal = document.getElementById('alert-drillthrough-modal');
+        console.log('Modal found:', !!modal); // Debug log
+        
+        if (modal && !modal.classList.contains('hidden')) {
+            console.log('Closing modal...'); // Debug log
+            modal.classList.add('hidden');
+            
+            // Limpar conteúdo do modal para melhor performance
+            const tableBody = document.getElementById('alert-modal-table-body');
+            const kpisContainer = document.getElementById('alert-modal-kpis');
+            
+            if (tableBody) tableBody.innerHTML = '';
+            if (kpisContainer) kpisContainer.innerHTML = '';
+        }
+    };
 
     // Função global para abrir o drill-through dos alertas
     window.openAlertDrillthrough = (alertType, totalValue, totalCount) => {
