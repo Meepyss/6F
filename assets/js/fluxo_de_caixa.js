@@ -803,13 +803,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Função auxiliar para criar células com barrinhas de fundo
+    const createBackgroundBar = (value, maxValue, color, currency) => {
+        if (maxValue === 0 || value === 0) {
+            return {
+                style: '',
+                content: currency
+            };
+        }
+        
+        const percentage = Math.max(0, Math.min(100, (value / maxValue) * 100));
+        const rgbaColor = color === '#60a5fa' ? 'rgba(96, 165, 250, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+        
+        return {
+            style: `background: linear-gradient(to right, ${rgbaColor} ${percentage}%, transparent ${percentage}%);`,
+            content: currency
+        };
+    };
+
     const renderCalendar = (filteredData, app) => {
         const dailyAggregates = {};
         let saldoAcumulado = initialBalance;
 
-        const maxReceber = Math.max(...filteredData.filter(d => d.type === 'receber').map(d => d.previstoValue), 0);
-        const maxPagar = Math.max(...filteredData.filter(d => d.type === 'pagar').map(d => d.previstoValue), 0);
-
+        // Calcular valores máximos para as barrinhas proporcionais
+        const allReceberValues = [];
+        const allPagarValues = [];
+        
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
             const dateStr = d.toISOString().split('T')[0];
             dailyAggregates[dateStr] = { receber: 0, pagar: 0 };
@@ -818,10 +837,22 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredData.forEach(item => {
             const dateStr = new Date(item.date).toISOString().split('T')[0];
             if (dailyAggregates[dateStr]) {
-                if (item.type === 'receber') dailyAggregates[dateStr].receber += item.previstoValue;
-                else dailyAggregates[dateStr].pagar += item.previstoValue;
+                if (item.type === 'receber') {
+                    dailyAggregates[dateStr].receber += item.previstoValue;
+                } else {
+                    dailyAggregates[dateStr].pagar += item.previstoValue;
+                }
             }
         });
+
+        // Coletar todos os valores para calcular máximos
+        Object.values(dailyAggregates).forEach(day => {
+            if (day.receber > 0) allReceberValues.push(day.receber);
+            if (day.pagar > 0) allPagarValues.push(day.pagar);
+        });
+
+        const maxReceber = allReceberValues.length > 0 ? Math.max(...allReceberValues) : 0;
+        const maxPagar = allPagarValues.length > 0 ? Math.max(...allPagarValues) : 0;
 
         app.config.dom.calendarBody.innerHTML = '';
         const fragment = document.createDocumentFragment();
@@ -831,13 +862,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const saldoDia = dayData.receber - dayData.pagar;
             saldoAcumulado += saldoDia;
 
+            // Criar barrinhas de fundo para as células
+            const receberBar = createBackgroundBar(dayData.receber, maxReceber, '#60a5fa', formatCurrency(dayData.receber));
+            const pagarBar = createBackgroundBar(dayData.pagar, maxPagar, '#ef4444', formatCurrency(dayData.pagar));
+
             const tr = document.createElement('tr');
             tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
             tr.innerHTML = `
                 <td class="p-2 text-gray-600">${formatDate(new Date(dateStr + 'T00:00:00'))}</td>
-                <td class="p-2 text-right text-gray-800 font-medium">${formatCurrency(dayData.receber)}</td>
-                <td class="p-2 text-right text-gray-800 font-medium">${formatCurrency(dayData.pagar)}</td>
-                <td class="p-2 text-right font-medium ${saldoDia < 0 ? 'text-gray-800' : 'text-gray-900'}">${formatCurrency(saldoDia)}</td>
+                <td class="p-2 text-right text-gray-800 font-medium" style="${receberBar.style}">${receberBar.content}</td>
+                <td class="p-2 text-right text-gray-800 font-medium" style="${pagarBar.style}">${pagarBar.content}</td>
+                <td class="p-2 text-right font-medium ${saldoDia < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(saldoDia)}</td>
                 <td class="p-2 text-right font-semibold text-gray-900">${formatCurrency(saldoAcumulado)}</td>
             `;
             fragment.appendChild(tr);
