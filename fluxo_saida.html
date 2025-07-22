@@ -163,26 +163,35 @@
                     </div>
                 </div>
 
+                <!-- Aging List - Compromissos a Pagar -->
+                <div class="bg-white rounded-xl shadow-sm border">
+                    <div class="p-4 border-b border-gray-100 bg-primary-light">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="font-semibold text-base text-gray-800">Aging List - Compromissos a Pagar</h3>
+                                <p class="text-xs text-gray-600 mt-1">Distribuição dos valores a pagar por faixa de vencimento</p>
+                            </div>
+                            <span class="text-xs text-gray-500 bg-red-100 text-red-700 px-2 py-1 rounded">Planejamento de Caixa</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="h-[320px]"><canvas id="aging-list-chart"></canvas></div>
+                    </div>
+                </div>
+
                 <!-- Tabela Detalhada -->
                 <div class="bg-white rounded-xl shadow-sm border">
                     <div class="p-4 border-b border-gray-100 bg-primary-light">
-                        <h3 class="font-semibold text-base text-primary">Código e Descrição Despesa</h3>
+                        <h3 class="font-semibold text-base text-primary">Fluxo de Caixa Diário</h3>
                     </div>
-                    <div class="overflow-auto max-h-[350px]">
+                    <div class="overflow-auto">
                         <table class="w-full text-xs">
-                            <thead class="text-gray-500 bg-gray-50 sticky top-0 z-10">
-                                <tr>
-                                    <th class="p-2 text-left font-medium w-16">Código</th>
-                                    <th class="p-2 text-left font-medium min-w-[200px]">Descrição Despesa</th>
-                                    <th class="p-2 text-right font-medium w-20">Janeiro</th>
-                                    <th class="p-2 text-right font-medium w-20">Fevereiro</th>
-                                    <th class="p-2 text-right font-medium w-20">Março</th>
-                                    <th class="p-2 text-right font-medium w-20">Abril</th>
-                                    <th class="p-2 text-right font-medium w-20">Maio</th>
-                                    <th class="p-2 text-right font-medium w-20">Junho</th>
-                                </tr>
+                            <thead class="text-gray-500 bg-gray-50 sticky top-0 z-10" id="detailed-table-head">
+                                <!-- Cabeçalho será renderizado via JS -->
                             </thead>
-                            <tbody id="detailed-table-body"></tbody>
+                            <tbody id="detailed-table-body" class="divide-y divide-gray-200">
+                                <!-- Dados serão renderizados via JS -->
+                            </tbody>
                         </table>
                     </div>
                     <!-- Controles de Paginação -->

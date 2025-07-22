@@ -152,6 +152,44 @@
                     </div>
                 </div>
 
+                <!-- Gráfico de Pareto - Maiores Devedores -->
+                <div class="bg-white rounded-xl shadow-sm border">
+                    <div class="p-4 border-b border-gray-100 bg-primary-light">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="font-semibold text-base text-gray-800">Gráfico de Pareto: Top 10 Maiores Devedores</h3>
+                                <p class="text-xs text-gray-600 mt-1">Valores vencidos - Concentração de débitos para otimizar cobrança</p>
+                            </div>
+                            <span class="text-xs text-gray-500 bg-red-100 text-red-700 px-2 py-1 rounded">Valores Vencidos</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="h-[350px] mb-4"><canvas id="pareto-devedores-chart"></canvas></div>
+                        
+                        <!-- Resumo Estatístico do Pareto -->
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div>
+                                    <p class="text-xs text-gray-600 mb-1">Total Top 10</p>
+                                    <p id="pareto-total" class="text-sm font-bold text-gray-900">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-600 mb-1">80% do Valor em</p>
+                                    <p id="pareto-80-percent" class="text-sm font-bold text-blue-600">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-600 mb-1">Maior Devedor</p>
+                                    <p id="pareto-maior" class="text-sm font-bold text-red-600">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-600 mb-1">Tempo Médio</p>
+                                    <p id="pareto-tempo-medio" class="text-sm font-bold text-gray-900">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tabela Detalhada -->
                 <div class="bg-white rounded-xl shadow-sm border">
                     <div class="p-4 border-b border-gray-100 bg-primary-light">

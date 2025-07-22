@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dataInicio: '',
         dataFim: ''
     };
+    let agingListChartInstance;
 
     // Função para converter data do formato YYYY-MM-DD para DD/MM/YYYY para exibição
     const formatarDataExibicao = (dataString) => {
@@ -788,6 +789,114 @@ document.addEventListener('DOMContentLoaded', () => {
         atualizarVisualizacoes();
     };
 
+    // Função para categorizar títulos por faixa de vencimento
+    const categorizarAging = (vencimento) => {
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const dataVenc = new Date(vencimento + 'T00:00:00');
+        const diffDias = Math.floor((dataVenc - hoje) / (1000 * 60 * 60 * 24));
+        if (diffDias < 0) return 'Vencido';
+        if (diffDias === 0) return 'Vence Hoje';
+        if (diffDias <= 7) return 'Vence em 7 dias';
+        if (diffDias <= 15) return 'Vence em 15 dias';
+        if (diffDias <= 30) return 'Vence em 30 dias';
+        return 'Vence em +30 dias';
+    };
+
+    const agingCategories = [
+        'Vencido',
+        'Vence Hoje',
+        'Vence em 7 dias',
+        'Vence em 15 dias',
+        'Vence em 30 dias',
+        'Vence em +30 dias'
+    ];
+
+    const coresAging = {
+        'Vencido': '#dc2626', // vermelho
+        'Vence Hoje': '#f59e42', // laranja
+        'Vence em 7 dias': '#60a5fa', // azul claro
+        'Vence em 15 dias': '#3b82f6', // azul médio
+        'Vence em 30 dias': '#003D75', // azul principal
+        'Vence em +30 dias': '#A4C4E0' // azul claro dashboard
+    };
+
+    const renderAgingListChart = () => {
+        const ctx = document.getElementById('aging-list-chart');
+        if (!ctx) return;
+        if (agingListChartInstance) agingListChartInstance.destroy();
+
+        // Filtrar apenas contas em aberto
+        const dados = obterDadosFiltrados().filter(item => item.status === 'Em Aberto');
+        // Agrupar por categoria
+        const valoresPorCategoria = {};
+        agingCategories.forEach(cat => valoresPorCategoria[cat] = 0);
+        dados.forEach(item => {
+            const cat = categorizarAging(item.vencimento);
+            valoresPorCategoria[cat] += item.valor;
+        });
+        const valores = agingCategories.map(cat => valoresPorCategoria[cat]);
+        const backgroundColors = agingCategories.map(cat => coresAging[cat]);
+
+        agingListChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: agingCategories,
+                datasets: [{
+                    label: 'Valor a Pagar (R$)',
+                    data: valores,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: R$ ${context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#003D75', font: { size: 11 } },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + (value/1000).toFixed(1) + 'K';
+                            },
+                            color: '#003D75', font: { size: 10 }
+                        },
+                        grid: { color: '#f3f4f6' }
+                    }
+                },
+                onClick: (evt, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const categoria = agingCategories[index];
+                        filtrarTabelaPorAging(categoria);
+                    }
+                }
+            }
+        });
+    };
+
+    // Função para filtrar a tabela detalhada pela categoria do aging
+    let agingFiltroAtivo = null;
+    function filtrarTabelaPorAging(categoria) {
+        agingFiltroAtivo = categoria;
+        atualizarVisualizacoes();
+    }
+
     // Função para atualizar todas as visualizações
     const atualizarVisualizacoes = () => {
         criarKPIs();
@@ -796,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
         popularTabela();
         popularPainelLateral();
         mostrarFiltrosAtivos();
+        renderAgingListChart(); // Atualizar o gráfico de Aging List
     };
 
     // Função de inicialização

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variáveis globais para controle de gráficos
     let evolucaoValoresChartInstance;
     let valoresCategoriaChartInstance;
+    let paretoDevedoresChartInstance;
     let dadosOriginais = {};
     let filtroAtual = 'em-aberto';
     let filtrosAtivos = {
@@ -379,6 +380,168 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const criarGraficoPareto = () => {
+        const ctx = document.getElementById('pareto-devedores-chart');
+        if (!ctx) return;
+
+        if (paretoDevedoresChartInstance) {
+            paretoDevedoresChartInstance.destroy();
+        }
+
+        // Gerar dados dos devedores
+        const dadosDevedores = gerarDadosDevedores();
+        
+        // Aplicar filtros se necessário (empresa)
+        let dadosFiltrados = dadosDevedores;
+        if (filtrosAtivos.empresa.length > 0) {
+            dadosFiltrados = dadosDevedores.filter(item => filtrosAtivos.empresa.includes(item.empresa));
+        }
+        
+        // Pegar apenas os top 10
+        const top10 = dadosFiltrados.slice(0, 10);
+        
+        // Verificar se há dados suficientes
+        if (top10.length === 0) {
+            document.getElementById('pareto-total').textContent = 'R$ 0,00';
+            document.getElementById('pareto-80-percent').textContent = '0 clientes';
+            document.getElementById('pareto-maior').textContent = 'R$ 0,00';
+            document.getElementById('pareto-tempo-medio').textContent = '0 dias';
+            return;
+        }
+        
+        // Calcular total e percentuais acumulados
+        const totalVencido = top10.reduce((sum, item) => sum + item.valorVencido, 0);
+        let acumulado = 0;
+        const percentuaisAcumulados = top10.map(item => {
+            acumulado += item.valorVencido;
+            return (acumulado / totalVencido) * 100;
+        });
+
+        const labels = top10.map(item => {
+            // Limitar nome para melhor visualização
+            return item.cliente.length > 15 ? item.cliente.substring(0, 15) + '...' : item.cliente;
+        });
+        const valores = top10.map(item => item.valorVencido);
+
+        // Calcular estatísticas para o resumo
+        const totalTop10 = totalVencido;
+        const maiorDevedor = top10[0];
+        const tempoMedio = top10.reduce((sum, item) => sum + item.diasVencido, 0) / top10.length;
+        let clientes80Percent = 0;
+        let acumulado80 = 0;
+        for (let i = 0; i < top10.length; i++) {
+            acumulado80 += top10[i].valorVencido;
+            clientes80Percent++;
+            if ((acumulado80 / totalVencido) >= 0.8) break;
+        }
+
+        document.getElementById('pareto-total').textContent = formatarMoeda(totalTop10);
+        document.getElementById('pareto-80-percent').textContent = `${clientes80Percent} clientes`;
+        document.getElementById('pareto-maior').textContent = formatarMoeda(maiorDevedor.valorVencido);
+        document.getElementById('pareto-tempo-medio').textContent = `${Math.round(tempoMedio)} dias`;
+
+        paretoDevedoresChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Valor Vencido (R$)',
+                        data: valores,
+                        backgroundColor: '#003D75', // azul principal
+                        borderColor: '#002a52', // azul escuro
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '% Acumulado',
+                        data: percentuaisAcumulados,
+                        type: 'line',
+                        borderColor: '#dc2626', // vermelho dashboard
+                        backgroundColor: 'rgba(220, 38, 38, 0.08)', // vermelho claro
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#dc2626', // vermelho dashboard
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        tension: 0.1,
+                        yAxisID: 'y1',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: { 
+                        position: 'top',
+                        labels: { 
+                            usePointStyle: true, 
+                            padding: 15,
+                            font: { size: 11 },
+                            color: '#003D75' // azul principal
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label.includes('Valor')) {
+                                    return `Valor Vencido: ${formatarMoeda(context.parsed.y)}`;
+                                } else {
+                                    return `% Acumulado: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { 
+                            color: '#003D75', // azul principal
+                            font: { size: 9 },
+                            maxRotation: 45
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatarMoeda(value);
+                            },
+                            color: '#003D75', // azul principal
+                            font: { size: 10 }
+                        },
+                        grid: { color: '#f3f4f6' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toFixed(0) + '%';
+                            },
+                            color: '#dc2626', // vermelho dashboard
+                            font: { size: 10 }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    };
+
     const popularTabela = () => {
         const tableBody = document.getElementById('detailed-table-body');
         if (!tableBody) return;
@@ -587,6 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
         criarKPIs();
         criarGraficoEvolucao();
         criarGraficoCategorias();
+        criarGraficoPareto();
         popularTabela();
         popularPainelLateral();
         mostrarFiltrosAtivos();
@@ -706,6 +870,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         atualizarVisualizacoes();
+    };
+
+    // Função para gerar dados mockados de devedores
+    const gerarDadosDevedores = () => {
+        const nomes = [
+            'Construtora ABC Ltda', 'Metalúrgica XYZ S/A', 'Transportadora Brasil',
+            'Indústria Nacional', 'Comércio São Paulo', 'Distribuidora Norte',
+            'Fábrica de Móveis', 'Empresa de Logística', 'Atacadista Regional',
+            'Indústria Química', 'Construtora Nordeste', 'Siderúrgica Sul',
+            'Distribuidora Centro', 'Fábrica Têxtil', 'Empresa de Mineração'
+        ];
+        
+        return nomes.map((nome, index) => ({
+            cliente: nome,
+            valorVencido: parseFloat((Math.random() * (150000 - 15000) + 15000).toFixed(2)),
+            diasVencido: Math.floor(Math.random() * 120) + 1,
+            empresa: ['6F', '8F', 'PEQUETITA'][index % 3]
+        })).sort((a, b) => b.valorVencido - a.valorVencido).slice(0, 10);
     };
 
     const gerarDadosMockados = () => {
