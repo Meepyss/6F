@@ -144,11 +144,8 @@ function renderDRETable(data, app) {
         return;
     }
     
-    // Processar dados de forma simples (como DAX no Power BI)
-    const dreData = processDataForDRE(data);
-    
-    // Gerar HTML simples
-    const html = generateDRERows(dreData);
+    // Usar dados estruturados em vez de processar dados dinâmicos
+    const html = generateDRERows();
     tbody.innerHTML = html;
     
     // Adicionar controles básicos
@@ -217,108 +214,189 @@ function processDataForDRE(data) {
     };
 }
 
-// Função simplificada para gerar linhas (simula visual do Power BI)
-function generateDRERows(dreData) {
-    const { estrutura, categorias, meses } = dreData;
+// Dados estruturados com drill-down (baseados nos dados fornecidos)
+const dadosEstruturados = [
+    {
+        nome: "SALDO INICIAL",
+        tipo: "header",
+        valores: [0, 339393, 77088, 179292, -70917, -1021785, -1685326, -2481708, -3269076, -4592950, -5910394, -7234583]
+    },
+    {
+        nome: "RECEBIMENTOS 6F", 
+        tipo: "receita",
+        valores: [935369, 1242684, 598176, 348475, 217962, 134695, 90530, 93018, 11115, 11115, 2333, 0]
+    },
+    {
+        nome: "RECEBIMENTOS 8F",
+        tipo: "receita", 
+        valores: [1001331, 488901, 497896, 381987, 227776, 147711, 82798, 61207, 23837, 23837, 0, 0]
+    },
+    {
+        nome: "RECEBIMENTOS PEQUETITA",
+        tipo: "receita",
+        valores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    {
+        nome: "TRIBUTOS SOBRE VENDAS",
+        tipo: "grupo_despesa",
+        expansivel: true,
+        valores: [-58504, -93921, -262000, -262000, -262000, -262000, -262000, -262000, -262000, -262000, -262000, -262000],
+        filhos: [
+            { nome: "28101 ICMS COMUM", valores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+            { nome: "28103 PIS", valores: [0, -1950, -17000, -17000, -17000, -17000, -17000, -17000, -17000, -17000, -17000, -17000] },
+            { nome: "28104 COFINS", valores: [0, -8999, -74000, -74000, -74000, -74000, -74000, -74000, -74000, -74000, -74000, -74000] },
+            { nome: "28105 IPI", valores: [0, 0, -90000, -90000, -90000, -90000, -90000, -90000, -90000, -90000, -90000, -90000] },
+            { nome: "28107 SIMPLES", valores: [0, 0, -25000, -25000, -25000, -25000, -25000, -25000, -25000, -25000, -25000, -25000] },
+            { nome: "28108 ICMS SUBST.", valores: [-57531, -25635, -50000, -50000, -50000, -50000, -50000, -50000, -50000, -50000, -50000, -50000] },
+            { nome: "28110 GNRE", valores: [-973, -57337, -6000, -6000, -6000, -6000, -6000, -6000, -6000, -6000, -6000, -6000] }
+        ]
+    },
+    {
+        nome: "RECEBIMENTOS LÍQUIDOS DE IMPOSTOS",
+        tipo: "header",
+        valores: [1878197, 1637664, 834071, 468461, 183739, 20406, -88671, -107774, -227048, -227047, -259667, -262000]
+    },
+    {
+        nome: "COMPRAS",
+        tipo: "despesa",
+        valores: [-1319293, -1148216, -38715, -24110, -21500, -23540, -31940, -16500, -18540, -15300, -28140, -14940]
+    },
+    {
+        nome: "MARGEM BRUTA",
+        tipo: "header",
+        valores: [558904, 489447, 795356, 444352, 162239, -3134, -120611, -124274, -245588, -242347, -287807, -276940]
+    },
+    {
+        nome: "DESPESAS COM PESSOAL",
+        tipo: "grupo_despesa",
+        expansivel: true,
+        valores: [-213407, -259161, -183913, -183320, -183320, -183320, -183320, -183320, -183320, -183320, -186820, -298946],
+        filhos: [
+            { nome: "21101 SALARIOS", valores: [-56211, -38140, -54319, -54319, -54319, -54319, -54319, -54319, -54319, -54319, -54319, -57857] },
+            { nome: "21102 VALE / ADIANTAMENTO", valores: [-23787, -29182, -27000, -27000, -27000, -27000, -27000, -27000, -27000, -27000, -27000, -27000] },
+            { nome: "21103 EMPRESTIMO A FUNCIONARIOS", valores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+            { nome: "21104 13O SALARIO", valores: [0, -77766, 0, 0, 0, 0, 0, 0, 0, 0, -3500, -76200] },
+            { nome: "21105 FERIAS", valores: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+            { nome: "21106 RESCISAO", valores: [0, -1064, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+            { nome: "21107 GRATIFICACOES", valores: [0, -12000, -12000, -12000, -12000, -12000, -12000, -12000, -12000, -12000, -12000, -12000] },
+            { nome: "21151 REMUNERACAO PJ", valores: [-10500, -18500, -7000, -7000, -7000, -7000, -7000, -7000, -7000, -7000, -7000, -7000] },
+            { nome: "21301 VALE TRANSPORTE", valores: [-16516, -9636, -9212, -9212, -9212, -9212, -9212, -9212, -9212, -9212, -9212, -4000] },
+            { nome: "21302 VALE REFEICAO", valores: [-36402, -21000, -21000, -21000, -21000, -21000, -21000, -21000, -21000, -21000, -21000, -21000] },
+            { nome: "21303 CONVENIO MEDICO", valores: [-10323, -12459, -11923, -11329, -11329, -11329, -11329, -11329, -11329, -11329, -11329, -11329] },
+            { nome: "21401 FGTS", valores: [-9966, -6548, -7500, -7500, -7500, -7500, -7500, -7500, -7500, -7500, -7500, -15000] },
+            { nome: "21402 GPS ( INSS )", valores: [-38818, -31961, -33600, -33600, -33600, -33600, -33600, -33600, -33600, -33600, -33600, -67200] }
+        ]
+    },
+    {
+        nome: "REMUNERAÇÃO DA DIRETORIA",
+        tipo: "grupo_despesa",
+        expansivel: true,
+        valores: [-31955, -42877, -49945, -49945, -49945, -49945, -49945, -49945, -49449, -49449, -49449, -49449],
+        filhos: [
+            { nome: "21201 PRO LABORE - ADMINISTRADORES", valores: [-2225, -2225, -2225, -2225, -2225, -2225, -2225, -2225, -2225, -2225, -2225, -2225] },
+            { nome: "51101 DIVIDENDOS AOS SOCIOS", valores: [-29730, -40652, -47720, -47720, -47720, -47720, -47720, -47720, -47224, -47224, -47224, -47224] }
+        ]
+    },
+    {
+        nome: "DESPESAS COMERCIAIS",
+        tipo: "grupo_despesa", 
+        expansivel: true,
+        valores: [-133486, -77950, -82690, -81852, -81828, -73828, -82721, -81828, -89828, -81828, -81828, -81828],
+        filhos: [
+            { nome: "24101 COMISSOES VENDEDORES", valores: [-59448, -14982, -71628, -71628, -71628, -63628, -71628, -71628, -79628, -71628, -71628, -71628] },
+            { nome: "24201 FEIRAS", valores: [-25955, -32308, -838, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+            { nome: "24202 MONTADORA E DESPESAS STAND", valores: [-36978, -20000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+            { nome: "24204 SITE", valores: [-12, -112, -100, -100, -100, -100, -993, -100, -100, -100, -100, -100] },
+            { nome: "24205 ANUNCIOS E ASSES. DE IMPRENSA", valores: [-10100, -9700, -10100, -10100, -10100, -10100, -10100, -10100, -10100, -10100, -10100, -10100] }
+        ]
+    },
+    {
+        nome: "OUTRAS DESPESAS",
+        tipo: "grupo_despesa",
+        expansivel: true,
+        valores: [-123834, -124229, -131156, -130766, -149917, -130301, -133289, -104023, -159031, -147303, -120498, -128247],
+        filhos: [
+            { nome: "22201 MATERIAL DE ESCRITORIO", valores: [-264, -1075, -1586, -1465, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000] },
+            { nome: "26201 ASSESSORIA CONTABIL / JURIDICA", valores: [-10280, -8767, -8260, -8260, -8260, -8260, -8260, -8260, -8260, -8260, -8260, -13520] },
+            { nome: "41106 JUROS ANTECIPACAO RECEBIVEIS", valores: [-45582, -64141, -76335, -76335, -76335, -76335, -76335, -76227, -76118, -76007, -75894, -69780] },
+            { nome: "41110 JUROS EMPRESTIMOS/CAPITAL GIRO", valores: [-8323, -17305, -17305, -17305, -17305, -17305, -17305, -17305, -17305, -17305, -17305, -17305] }
+        ]
+    }
+];
+
+// Função para gerar linhas com drill-down
+function generateDRERows() {
     let html = '';
     
-    // Totais simples
-    const totalReceitas = meses.reduce((sum, mes) => sum + estrutura.receitas[mes], 0);
-    const totalDespesas = meses.reduce((sum, mes) => sum + estrutura.despesas[mes], 0);
-    
-    // Seção Receitas
-    if (totalReceitas > 0) {
-        html += `
-            <tr class="dre-section-header">
-                <td></td>
-                <td>RECEITAS</td>
-                ${meses.map(mes => `<td>${formatCurrency(estrutura.receitas[mes])}</td>`).join('')}
-                <td>${formatCurrency(totalReceitas)}</td>
-                <td>100%</td>
-            </tr>`;
+    dadosEstruturados.forEach((item, index) => {
+        const total = item.valores.reduce((sum, val) => sum + val, 0);
         
-        // Categorias de receitas
-        Object.entries(categorias).forEach(([categoria, dados]) => {
-            if (dados.tipo === 'receita') {
-                const total = meses.reduce((sum, mes) => sum + dados.totais[mes], 0);
-                const percentual = totalReceitas > 0 ? (total / totalReceitas * 100) : 0;
-                
+        if (item.expansivel) {
+            // Linha expansível (grupo)
+            html += `
+                <tr class="dre-categoria" data-toggle="${index}" style="cursor: pointer;">
+                    <td><span class="drill-toggle">▶</span></td>
+                    <td><strong>${item.nome}</strong></td>
+                    ${item.valores.map(val => `<td class="${val < 0 ? 'valor-negativo' : (val > 0 ? 'valor-positivo' : '')}">${formatCurrency(val)}</td>`).join('')}
+                    <td class="${total < 0 ? 'valor-negativo' : (total > 0 ? 'valor-positivo' : '')}">${formatCurrency(total)}</td>
+                    <td class="percentual"></td>
+                </tr>`;
+            
+            // Linhas filhas (ocultas por padrão)
+            item.filhos.forEach(filho => {
+                const totalFilho = filho.valores.reduce((sum, val) => sum + val, 0);
                 html += `
-                    <tr class="dre-categoria">
+                    <tr class="dre-subcategoria" data-parent="${index}" style="display: none;">
                         <td></td>
-                        <td>${categoria}</td>
-                        ${meses.map(mes => `<td class="valor-positivo">${formatCurrency(dados.totais[mes])}</td>`).join('')}
-                        <td class="valor-positivo">${formatCurrency(total)}</td>
-                        <td class="percentual">${formatPercentual(percentual)}</td>
-                    </tr>`;
-            }
-        });
-    }
-    
-    // Seção Despesas
-    if (totalDespesas > 0) {
-        html += `
-            <tr class="dre-section-header">
-                <td></td>
-                <td>DESPESAS</td>
-                ${meses.map(mes => `<td>${formatCurrency(estrutura.despesas[mes])}</td>`).join('')}
-                <td>${formatCurrency(totalDespesas)}</td>
-                <td>${formatPercentual(totalDespesas / (totalReceitas) * 100)}</td>
-            </tr>`;
-        
-        // Categorias de despesas
-        Object.entries(categorias).forEach(([categoria, dados]) => {
-            if (dados.tipo === 'despesa') {
-                const total = meses.reduce((sum, mes) => sum + dados.totais[mes], 0);
-                const percentual = totalDespesas > 0 ? (total / totalDespesas * 100) : 0;
-                
-                html += `
-                    <tr class="dre-categoria">
+                        <td style="padding-left: 2rem; font-style: italic;">${filho.nome}</td>
+                        ${filho.valores.map(val => `<td class="${val < 0 ? 'valor-negativo' : (val > 0 ? 'valor-positivo' : '')}">${formatCurrency(val)}</td>`).join('')}
+                        <td class="${totalFilho < 0 ? 'valor-negativo' : (totalFilho > 0 ? 'valor-positivo' : '')}">${formatCurrency(totalFilho)}</td>
                         <td></td>
-                        <td>${categoria}</td>
-                        ${meses.map(mes => `<td class="valor-negativo">${formatCurrency(dados.totais[mes])}</td>`).join('')}
-                        <td class="valor-negativo">${formatCurrency(total)}</td>
-                        <td class="percentual">${formatPercentual(percentual)}</td>
                     </tr>`;
-            }
-        });
-    }
-    
-    // Resultado final
-    const totalLiquido = totalReceitas - totalDespesas;
-    const cssClass = totalLiquido >= 0 ? 'valor-positivo' : 'valor-negativo';
-    
-    html += `
-        <tr class="dre-total">
-            <td></td>
-            <td>RESULTADO LÍQUIDO</td>
-            ${meses.map(mes => {
-                const valorMes = estrutura.receitas[mes] - estrutura.despesas[mes];
-                const mesCssClass = valorMes >= 0 ? 'valor-positivo' : 'valor-negativo';
-                return `<td class="${mesCssClass}">${formatCurrency(valorMes)}</td>`;
-            }).join('')}
-            <td class="${cssClass}">${formatCurrency(totalLiquido)}</td>
-            <td class="percentual">${totalReceitas > 0 ? formatPercentual(Math.abs(totalLiquido) / totalReceitas * 100) : '0%'}</td>
-        </tr>`;
+            });
+        } else {
+            // Linha normal
+            const classe = item.tipo === 'header' ? 'dre-section-header' : 
+                         item.tipo === 'receita' ? 'dre-categoria' :
+                         item.tipo === 'despesa' ? 'dre-categoria' : 'dre-categoria';
+            
+            html += `
+                <tr class="${classe}">
+                    <td></td>
+                    <td>${item.nome}</td>
+                    ${item.valores.map(val => `<td class="${val < 0 ? 'valor-negativo' : (val > 0 ? 'valor-positivo' : '')}">${formatCurrency(val)}</td>`).join('')}
+                    <td class="${total < 0 ? 'valor-negativo' : (total > 0 ? 'valor-positivo' : '')}">${formatCurrency(total)}</td>
+                    <td class="percentual"></td>
+                </tr>`;
+        }
+    });
     
     return html;
 }
 
 // Controles simples de drill-down (Power BI básico)
 function addDrillDownListeners() {
-    document.querySelectorAll('.drill-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            const categoria = this.getAttribute('data-categoria');
-            const subcategorias = document.querySelectorAll(`.drill-content[data-parent="${categoria}"]`);
+    // Adicionar listeners para linhas expansíveis
+    document.querySelectorAll('[data-toggle]').forEach(row => {
+        row.addEventListener('click', function() {
+            const groupIndex = this.getAttribute('data-toggle');
+            const childRows = document.querySelectorAll(`[data-parent="${groupIndex}"]`);
+            const toggle = this.querySelector('.drill-toggle');
             
             if (this.classList.contains('expanded')) {
+                // Recolher
                 this.classList.remove('expanded');
-                this.textContent = '▶';
-                subcategorias.forEach(row => row.classList.remove('show'));
+                toggle.textContent = '▶';
+                childRows.forEach(childRow => {
+                    childRow.style.display = 'none';
+                });
             } else {
+                // Expandir
                 this.classList.add('expanded');
-                this.textContent = '▼';
-                subcategorias.forEach(row => row.classList.add('show'));
+                toggle.textContent = '▼';
+                childRows.forEach(childRow => {
+                    childRow.style.display = 'table-row';
+                });
             }
         });
     });
