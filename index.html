@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Financeiro - Redirecionando...</title>
+    <meta http-equiv="refresh" content="0; url=./fluxo_caixa.html">
+    <link rel="canonical" href="./fluxo_caixa.html">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fallback {
+            margin-top: 1rem;
+            opacity: 0.8;
+        }
+        a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <div class="spinner"></div>
+        <h2>Carregando Painel Financeiro...</h2>
+        <p>Redirecionando automaticamente...</p>
+        <div class="fallback">
+            <p>Se não for redirecionado automaticamente, <a href="./fluxo_caixa.html">clique aqui</a>.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Redirecionamento por JavaScript como fallback
+        setTimeout(() => {
+            if (window.location.href.includes('index.html') || window.location.pathname === '/') {
+                window.location.href = './fluxo_caixa.html';
+            }
+        }, 100);
+    </script>
+</body>
+</html> 
