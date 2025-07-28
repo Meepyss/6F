@@ -632,555 +632,135 @@ label {
     border-color: var(--primary-dark);
 }
 
-/* Estilos para Tabela DRE - Power BI Compatible */
-.dre-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 11px;
-    line-height: 1.4;
-    background-color: white;
-    table-layout: auto;
-    word-wrap: break-word;
-    border: 1px solid #ddd;
+/* ======================================================================== */
+/* Tabela DRE (Demonstração do Resultado do Exercício)                      */
+/* Estilo limpo e moderno, inspirado no Power BI, com foco em legibilidade. */
+/* ======================================================================== */
+
+/* Container da Tabela */
+.dre-table-container {
+    overflow-x: auto; /* Rolagem horizontal se necessário */
+    background-color: #ffffff;
+    border: 1px solid var(--gray-200);
+    border-radius: 0 0 0.75rem 0.75rem; /* Bordas arredondadas apenas na parte inferior */
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
 
+/* Tabela Principal */
+.dre-table {
+    width: 100%;
+    border-collapse: collapse; /* Bordas colapsadas para um visual limpo */
+    font-size: 0.875rem; /* 14px */
+    color: var(--gray-700);
+}
+
+/* Cabeçalho da Tabela */
 .dre-table th {
-    background-color: #f2f2f2;
-    color: #333333;
-    font-weight: 600;
-    text-align: right;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    white-space: nowrap;
+    background-color: var(--gray-50);
+    padding: 0.75rem 1rem; /* 12px 16px */
+    border-bottom: 2px solid var(--gray-200);
+    font-weight: 600; /* Semi-bold */
+    color: var(--gray-600);
+    text-align: right; /* Padrão para a direita (números) */
+    white-space: nowrap; /* Evitar quebra de linha */
     position: sticky;
     top: 0;
     z-index: 10;
-    font-size: 10px;
-    text-transform: none;
-    letter-spacing: normal;
-}
-
-.dre-table th:first-child {
-    text-align: center;
-    width: 40px;
-    padding: 8px 6px;
 }
 
 .dre-table th:nth-child(2) {
-    text-align: left;
-    min-width: 200px;
-    max-width: 200px;
-    padding-left: 12px;
+    text-align: left; /* Categoria alinhada à esquerda */
+    width: 250px; /* Largura fixa para a coluna de categoria */
 }
 
-.dre-table th:nth-child(n+3) {
-    min-width: 70px;
-    max-width: 70px;
+.dre-table th:first-child {
+    width: 40px; /* Coluna de toggle */
 }
 
-.dre-table th:nth-last-child(2) {
-    min-width: 90px;
-    max-width: 90px;
-}
-
-.dre-table th:last-child {
-    min-width: 50px;
-    max-width: 50px;
-}
-
+/* Células da Tabela */
 .dre-table td {
-    padding: 6px 12px;
-    border: 1px solid #ddd;
-    vertical-align: middle;
+    padding: 0.75rem 1rem; /* 12px 16px */
+    border-bottom: 1px solid var(--gray-100);
     text-align: right;
-    font-size: 10px;
-    line-height: 1.3;
-}
-
-.dre-table td:first-child {
-    text-align: center;
-    width: 40px;
-    padding: 6px 6px;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
 .dre-table td:nth-child(2) {
     text-align: left;
-    font-weight: normal;
-    padding-left: 12px;
-    min-width: 200px;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal; /* Permitir quebra de linha para nomes de categoria longos */
+    word-break: break-word;
 }
 
-.dre-table td:nth-child(n+3) {
-    min-width: 70px;
-    max-width: 70px;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 10px;
+/* Efeito de Hover nas Linhas */
+.dre-table .dre-categoria:hover td {
+    background-color: var(--primary-lighter);
 }
 
-.dre-table td:nth-last-child(2) {
-    min-width: 90px;
-    max-width: 90px;
-    font-weight: 600;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 10px;
+/* --- Hierarquia e Estilos de Linha --- */
+
+/* Linha de Cabeçalho de Seção (Receitas/Despesas) */
+.dre-section-header td {
+    background-color: var(--gray-100);
+    color: var(--primary-dark);
+    font-weight: 700; /* Bold */
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--gray-200);
+    border-top: 2px solid var(--gray-200);
 }
 
-.dre-table td:last-child {
-    min-width: 50px;
-    max-width: 50px;
-    font-size: 9px;
-}
-
-/* Estilos Power BI - Hierarquia simples */
-.dre-header {
-    background-color: #005a9f;
-    font-weight: 600;
-    color: white;
-    font-size: 11px;
-}
-
-.dre-header td {
-    border: 1px solid #004578;
-    padding: 8px 12px;
-}
-
-.dre-header td:first-child {
-    padding: 8px 6px;
-}
-
-.dre-header td:nth-child(2) {
-    padding-left: 12px;
-}
-
-.dre-subheader {
-    background-color: #e6f2ff;
-    font-weight: 600;
-    color: #005a9f;
-    font-size: 10px;
-}
-
-.dre-subheader td {
-    border: 1px solid #cce0f0;
-    padding: 6px 12px;
-}
-
-.dre-subheader td:first-child {
-    padding: 6px 6px;
-}
-
-.dre-subheader td:nth-child(2) {
-    padding-left: 12px;
-}
-
-.dre-categoria {
-    background-color: #ffffff;
-    font-weight: normal;
-    color: #333333;
-}
-
-.dre-categoria:hover {
-    background-color: #f5f5f5;
-}
-
+/* Linha de Categoria Principal */
 .dre-categoria td {
-    padding: 6px 12px;
-}
-
-.dre-categoria td:first-child {
-    padding: 6px 6px;
+    font-weight: 500; /* Medium */
 }
 
 .dre-categoria td:nth-child(2) {
-    padding-left: 12px;
+    font-weight: 600; /* Semi-bold para o nome da categoria */
+    color: var(--gray-800);
 }
 
-.dre-subcategoria {
-    background-color: #ffffff;
-    color: #666666;
-    font-size: 9px;
-    display: none;
-}
-
-.dre-subcategoria.show {
-    display: table-row;
-}
-
-.dre-subcategoria td {
-    padding: 4px 12px;
-}
-
-.dre-subcategoria td:first-child {
-    padding: 4px 6px;
-}
-
-.dre-subcategoria td:nth-child(2) {
-    padding-left: 24px;
-    font-size: 9px;
-}
-
-.dre-total {
-    background-color: #f0f8ff;
-    font-weight: 600;
-    color: #005a9f;
-    border-top: 2px solid #005a9f;
-}
-
+/* Linha de Resultado Líquido (Total) */
 .dre-total td {
-    border: 1px solid #cce0f0;
-    padding: 8px 12px;
-    font-size: 10px;
+    background-color: var(--neutral-light);
+    font-weight: 700; /* Bold */
+    color: var(--gray-800);
+    border-top: 2px solid var(--gray-300);
+    border-bottom: none; /* Sem borda inferior na última linha */
 }
 
-.dre-total td:first-child {
-    padding: 8px 6px;
-}
 
-.dre-total td:nth-child(2) {
-    padding-left: 12px;
-}
+/* --- Estilos Semânticos para Valores --- */
 
-/* Controles Power BI Style */
-.drill-toggle {
-    cursor: pointer;
-    color: #005a9f;
-    font-size: 10px;
-    transition: none;
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    text-align: center;
-    border: none;
-    background-color: transparent;
-}
-
-.drill-toggle:hover {
-    color: #003d6b;
-}
-
-.drill-toggle.expanded {
-    transform: rotate(90deg);
-}
-
-/* Valores Power BI - Cores simples */
+/* Valores positivos (Receitas) */
 .valor-positivo {
-    color: #107c10;
-    font-weight: normal;
+    color: var(--semantic-success);
+    font-weight: 600;
 }
 
+/* Valores negativos (Despesas) */
 .valor-negativo {
-    color: #d13438;
-    font-weight: normal;
+    color: var(--semantic-error);
+    font-weight: 600;
 }
 
+/* Coluna de Percentual */
 .percentual {
-    color: #666666;
-    font-size: 9px;
-    font-weight: normal;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    font-weight: 500;
 }
 
-/* Container Power BI Style */
-.dre-table-container {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 500px;
-    border: 1px solid #ddd;
-    border-radius: 2px;
-    box-shadow: none;
-    background-color: white;
-}
-
-.dre-table-container::-webkit-scrollbar {
-    height: 12px;
-    width: 12px;
-}
-
-.dre-table-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.dre-table-container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 0;
-}
-
-.dre-table-container::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Responsividade Power BI */
-@media (max-width: 1024px) {
-    .dre-table {
-        font-size: 10px;
-    }
-    
-    .dre-table th:nth-child(n+3),
-    .dre-table td:nth-child(n+3) {
-        min-width: 60px;
-        max-width: 60px;
-        font-size: 9px;
-    }
-    
-    .dre-table th:nth-child(2),
-    .dre-table td:nth-child(2) {
-        min-width: 150px;
-        max-width: 150px;
-    }
-}
-
+/* --- Responsividade (Opcional, mas bom ter) --- */
 @media (max-width: 768px) {
     .dre-table {
-        font-size: 9px;
+        font-size: 0.8rem;
+    }
+
+    .dre-table th:nth-child(2) {
+        width: 150px;
     }
     
-    .dre-table th:nth-child(n+3),
-    .dre-table td:nth-child(n+3) {
-        min-width: 50px;
-        max-width: 50px;
-        font-size: 8px;
-        padding: 4px 6px;
+    .dre-table th, .dre-table td {
+        padding: 0.5rem;
     }
-    
-    .dre-table th:nth-child(2),
-    .dre-table td:nth-child(2) {
-        min-width: 120px;
-        max-width: 120px;
-    }
-}
-
-/* Remover efeitos avançados não disponíveis no Power BI */
-.dre-table tr {
-    transition: none;
-}
-
-.dre-table tr:nth-child(even) {
-    background-color: #fafafa;
-}
-
-/* Simplificar valores monetários */
-.dre-table td[class*="valor-"] {
-    text-align: right;
-}
-
-/* Garantir compatibilidade */
-.dre-table td,
-.dre-table th {
-    box-sizing: border-box;
-}
-
-/* Remover estilos complexos */
-.dre-table td:nth-child(2) {
-    word-break: normal;
-    hyphens: none;
-}
-
-/* Debug styles removidos */
-
-/* Garantir que a tabela seja visível */
-.dre-table-container:empty::after {
-    content: "Carregando dados...";
-    display: block;
-    text-align: center;
-    padding: 20px;
-    color: #666;
-    font-style: italic;
-}
-
-/* Estilos para garantir que os dados sejam exibidos */
-#dre-table-body:empty::after {
-    content: "Nenhum dado encontrado";
-    display: block;
-    text-align: center;
-    padding: 20px;
-    color: #666;
-    font-style: italic;
-}
-
-/* Estilos finais para uniformidade */
-.dre-table-container {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 600px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    background-color: white;
-    margin: 0;
-}
-
-/* Melhorar alinhamento vertical */
-.dre-table td,
-.dre-table th {
-    vertical-align: middle;
-}
-
-/* Garantir que os números fiquem alinhados */
-.dre-table td[class*="valor-"],
-.dre-table th:nth-child(n+3) {
-    text-align: right;
-    padding-right: 18px;
-    padding-left: 18px;
-}
-
-/* Melhorar espaçamento dos controles de drill-down */
-.drill-toggle {
-    margin: 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Garantir que as bordas sejam consistentes */
-.dre-table tr:last-child td {
-    border-bottom: none;
-}
-
-.dre-table tr:last-child.dre-total td {
-    border-bottom: 2px solid #c8e6c9;
-}
-
-/* Garantir que os filtros tenham altura consistente */
-.custom-select-button,
-input[type="date"] {
-    min-height: 40px;
-    box-sizing: border-box;
-}
-
-/* Melhorar espaçamento dos filtros ativos */
-#active-filters-container {
-    min-height: 2rem;
-    padding: 0.5rem 0;
-}
-
-/* Garantir que o container da tabela tenha margem adequada */
-.dre-table-container {
-    margin: 0;
-    border-radius: 0 0 8px 8px;
-}
-
-/* Melhorar o cabeçalho da tabela */
-.dre-table-container + div {
-    border-radius: 8px 8px 0 0;
-}
-
-/* Garantir que os valores zero sejam consistentes */
-.dre-table td:empty,
-.dre-table td:blank {
-    color: #ccc;
-    font-style: italic;
-}
-
-/* Melhorar a legibilidade dos percentuais */
-.dre-table td.percentual {
-    font-weight: 500;
-    color: #666;
-    font-size: 11px;
-}
-
-/* Garantir que os totais sejam destacados */
-.dre-table td:nth-last-child(2) {
-    font-weight: 600;
-    background-color: rgba(0, 61, 117, 0.02);
-}
-
-/* Melhorar hover states */
-.dre-table tr:hover td {
-    background-color: rgba(0, 61, 117, 0.05);
-}
-
-.dre-table tr.dre-header:hover td,
-.dre-table tr.dre-subheader:hover td,
-.dre-table tr.dre-total:hover td {
-    background-color: inherit;
-}
-
-/* Remover espaços em branco desnecessários */
-.dre-table tbody tr {
-    border-spacing: 0;
-}
-
-/* Garantir espaçamento uniforme */
-.dre-table td,
-.dre-table th {
-    box-sizing: border-box;
-    border-collapse: collapse;
-}
-
-/* Melhorar texto longo em células */
-.dre-table td:nth-child(2) {
-    word-break: break-word;
-    hyphens: auto;
-}
-
-/* Garantir espaçamento adequado para números */
-.dre-table td:nth-child(n+3),
-.dre-table th:nth-child(n+3) {
-    white-space: nowrap;
-    text-overflow: clip;
-    overflow: visible;
-}
-
-/* Melhorar legibilidade dos valores monetários */
-.dre-table .valor-positivo,
-.dre-table .valor-negativo {
-    letter-spacing: 0.3px;
-}
-
-/* Garantir que células não sejam muito apertadas */
-.dre-table td {
-    min-height: 40px;
-    height: auto;
-}
-
-.dre-table th {
-    min-height: 44px;
-    height: auto;
-}
-
-/* Estilos específicos para cabeçalhos e totais */
-.dre-table .dre-header td {
-    min-height: 50px;
-    height: auto;
-}
-
-.dre-table .dre-subheader td {
-    min-height: 46px;
-    height: auto;
-}
-
-.dre-table .dre-total td {
-    min-height: 50px;
-    height: auto;
-}
-
-.dre-table .dre-subcategoria td {
-    min-height: 38px;
-    height: auto;
-}
-
-/* Melhorar espaçamento interno das células */
-.dre-table td {
-    padding-top: 12px;
-    padding-bottom: 12px;
-}
-
-.dre-table th {
-    padding-top: 14px;
-    padding-bottom: 14px;
-}
-
-/* Garantir que o texto não seja cortado */
-.dre-table {
-    border-spacing: 0;
-}
-
-/* Ajustes específicos para valores grandes */
-.dre-table td:nth-last-child(2) {
-    min-width: 130px;
-    font-size: 13px;
-    font-weight: 600;
 }

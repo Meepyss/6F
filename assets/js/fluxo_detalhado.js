@@ -229,11 +229,11 @@ function generateDRERows(dreData) {
     // Seção Receitas
     if (totalReceitas > 0) {
         html += `
-            <tr class="dre-subheader">
+            <tr class="dre-section-header">
                 <td></td>
                 <td>RECEITAS</td>
-                ${meses.map(mes => `<td class="valor-positivo">${formatCurrency(estrutura.receitas[mes])}</td>`).join('')}
-                <td class="valor-positivo">${formatCurrency(totalReceitas)}</td>
+                ${meses.map(mes => `<td>${formatCurrency(estrutura.receitas[mes])}</td>`).join('')}
+                <td>${formatCurrency(totalReceitas)}</td>
                 <td>100%</td>
             </tr>`;
         
@@ -258,12 +258,12 @@ function generateDRERows(dreData) {
     // Seção Despesas
     if (totalDespesas > 0) {
         html += `
-            <tr class="dre-subheader">
+            <tr class="dre-section-header">
                 <td></td>
                 <td>DESPESAS</td>
-                ${meses.map(mes => `<td class="valor-negativo">${formatCurrency(estrutura.despesas[mes])}</td>`).join('')}
-                <td class="valor-negativo">${formatCurrency(totalDespesas)}</td>
-                <td>${formatPercentual(totalDespesas / (totalReceitas + totalDespesas) * 100)}</td>
+                ${meses.map(mes => `<td>${formatCurrency(estrutura.despesas[mes])}</td>`).join('')}
+                <td>${formatCurrency(totalDespesas)}</td>
+                <td>${formatPercentual(totalDespesas / (totalReceitas) * 100)}</td>
             </tr>`;
         
         // Categorias de despesas
@@ -285,16 +285,20 @@ function generateDRERows(dreData) {
     }
     
     // Resultado final
-    const totalLiquido = meses.reduce((sum, mes) => sum + estrutura.totais[mes], 0);
+    const totalLiquido = totalReceitas - totalDespesas;
     const cssClass = totalLiquido >= 0 ? 'valor-positivo' : 'valor-negativo';
     
     html += `
         <tr class="dre-total">
             <td></td>
             <td>RESULTADO LÍQUIDO</td>
-            ${meses.map(mes => `<td class="${cssClass}">${formatCurrency(estrutura.totais[mes])}</td>`).join('')}
+            ${meses.map(mes => {
+                const valorMes = estrutura.receitas[mes] - estrutura.despesas[mes];
+                const mesCssClass = valorMes >= 0 ? 'valor-positivo' : 'valor-negativo';
+                return `<td class="${mesCssClass}">${formatCurrency(valorMes)}</td>`;
+            }).join('')}
             <td class="${cssClass}">${formatCurrency(totalLiquido)}</td>
-            <td class="percentual">${formatPercentual(Math.abs(totalLiquido) / (totalReceitas + totalDespesas) * 100)}</td>
+            <td class="percentual">${totalReceitas > 0 ? formatPercentual(Math.abs(totalLiquido) / totalReceitas * 100) : '0%'}</td>
         </tr>`;
     
     return html;
