@@ -395,8 +395,8 @@ function formatPercentual(value) {
 async function loadCombinedData() {
     try {
         const [receitasData, despesasData] = await Promise.all([
-            fetch('assets/data/contas_a_receber_data.json').then(res => res.json()),
-            fetch('assets/data/contas_a_pagar_data.json').then(res => res.json())
+            fetch('assets/data/contas_a_receber_data.json?v=' + Date.now()).then(res => res.json()),
+            fetch('assets/data/contas_a_pagar_data.json?v=' + Date.now()).then(res => res.json())
         ]);
         
         // Processar dados de receitas
@@ -429,6 +429,9 @@ async function loadCombinedData() {
         // Extrair opções únicas para filtros
         const empresas = [...new Set(combinedData.map(item => item.empresa))].filter(Boolean);
         const categorias = [...new Set(combinedData.map(item => item.categoria))].filter(Boolean);
+        
+        // Debug: verificar empresas carregadas
+        console.log('Empresas carregadas:', empresas);
         
         // Atualizar configuração
         dreConfig.customSelects[0].options = empresas;

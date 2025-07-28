@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Painel Financeiro - Fluxo de Caixa Detalhado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="assets/css/style.css">
@@ -299,8 +302,14 @@
         </div>
     </div>
 
-<script src="assets/js/app.js"></script>
-<script src="assets/js/fluxo_detalhado.js"></script>
+<script src="assets/js/app.js?v=1"></script>
+<script src="assets/js/fluxo_detalhado.js?v=1"></script>
+<script>
+    // Forçar recarregamento dos dados
+    if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+        window.location.reload();
+    }
+</script>
 
 </body>
 </html> 
