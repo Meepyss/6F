@@ -255,6 +255,25 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
+    // Função para fechar o modal
+    const closeAlertModal = () => {
+        console.log('closeAlertModal called'); // Debug log
+        const modal = document.getElementById('alert-drillthrough-modal');
+        console.log('Modal found:', !!modal); // Debug log
+        
+        if (modal && !modal.classList.contains('hidden')) {
+            console.log('Closing modal...'); // Debug log
+            modal.classList.add('hidden');
+            
+            // Limpar conteúdo do modal para melhor performance
+            const tableBody = document.getElementById('alert-modal-table-body');
+            const kpisContainer = document.getElementById('alert-modal-kpis');
+            
+            if (tableBody) tableBody.innerHTML = '';
+            if (kpisContainer) kpisContainer.innerHTML = '';
+        }
+    };
+
     // Função global para fechar o modal (disponibilizar globalmente)
     window.closeAlertModal = closeAlertModal;
 
@@ -357,25 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Configurar event listeners e mostrar modal
         setupModalEventListeners();
         modal.classList.remove('hidden');
-    };
-
-    // Função para fechar o modal
-    const closeAlertModal = () => {
-        console.log('closeAlertModal called'); // Debug log
-        const modal = document.getElementById('alert-drillthrough-modal');
-        console.log('Modal found:', !!modal); // Debug log
-        
-        if (modal && !modal.classList.contains('hidden')) {
-            console.log('Closing modal...'); // Debug log
-            modal.classList.add('hidden');
-            
-            // Limpar conteúdo do modal para melhor performance
-            const tableBody = document.getElementById('alert-modal-table-body');
-            const kpisContainer = document.getElementById('alert-modal-kpis');
-            
-            if (tableBody) tableBody.innerHTML = '';
-            if (kpisContainer) kpisContainer.innerHTML = '';
-        }
     };
 
     // Configurar event listeners para o modal (apenas uma vez)
