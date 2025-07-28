@@ -1,132 +1,122 @@
-// Configuração do Dashboard DRE Detalhado
+// Configuração Power BI Compatible - Estrutura simples
 const dreConfig = {
+    dom: {
+        dreTableBody: document.getElementById('dre-table-body'),
+        totalRegistros: document.getElementById('total-registros'),
+        activeFiltersContainer: document.getElementById('active-filters-container')
+    },
     initialFilters: {
-        tipo: 'ambos',
         empresa: [],
         categoria: [],
         status: [],
+        tipoMovimento: 'ambos',
         dataInicio: '2025-01-01',
         dataFim: '2025-12-31'
     },
-    
-    dom: {
-        totalRegistros: document.getElementById('total-registros'),
-        activeFiltersContainer: document.getElementById('active-filters-container'),
-        dreTableBody: document.getElementById('dre-table-body'),
-        dataInicioFilter: document.getElementById('data-inicio-filter'),
-        dataFimFilter: document.getElementById('data-fim-filter'),
-        empresaFilterContainer: document.getElementById('empresa-filter-container'),
-        categoriaFilterContainer: document.getElementById('categoria-filter-container'),
-        statusFilterContainer: document.getElementById('status-filter-container')
-    },
-    
-    customSelects: [
-        {
-            type: 'Empresas',
-            filterKey: 'empresa',
-            containerId: 'empresa-filter-container',
-            options: []
-        },
-        {
-            type: 'Categorias',
-            filterKey: 'categoria',
-            containerId: 'categoria-filter-container',
-            options: []
-        },
-        {
-            type: 'Status',
-            filterKey: 'status',
-            containerId: 'status-filter-container',
-            options: ['Pago', 'Em Aberto', 'Vencido']
-        }
-    ],
-    
     filterPillDefinitions: [
         { type: 'empresa', label: 'Empresa' },
         { type: 'categoria', label: 'Categoria' },
         { type: 'status', label: 'Status' }
     ],
-    
-    renderFunctions: [
-        renderDRETable,
-        updateTotalRegistros
+    customSelects: [
+        { type: 'empresa', options: [], containerId: 'empresa-filter-container', filterKey: 'empresa' },
+        { type: 'categoria', options: [], containerId: 'categoria-filter-container', filterKey: 'categoria' },
+        { type: 'status', options: ['Em Aberto', 'Vencido', 'Compensado', 'Pago Parcial', 'Em Carteira', 'Descontado', 'Remessa Simples', 'Vinculado'], containerId: 'status-filter-container', filterKey: 'status' }
     ],
     
+    // Função necessária para compatibilidade com app.js
     setupEventListeners: function(app) {
+        // Event listeners básicos para Power BI
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.onclick = () => app.clearFilters();
+        }
+        
         // Filtros de tipo (Receitas/Despesas/Ambos)
-        document.getElementById('filtro-receitas').onclick = () => {
-            updateTipoFilter('receitas', app);
-        };
-        document.getElementById('filtro-despesas').onclick = () => {
-            updateTipoFilter('despesas', app);
-        };
-        document.getElementById('filtro-ambos').onclick = () => {
-            updateTipoFilter('ambos', app);
-        };
+        const filtroReceitas = document.getElementById('filtro-receitas');
+        const filtroDespesas = document.getElementById('filtro-despesas');
+        const filtroAmbos = document.getElementById('filtro-ambos');
         
-        // Botão limpar filtros
-        document.getElementById('clear-filters-btn').onclick = () => app.clearFilters();
-        
+        if (filtroReceitas) {
+            filtroReceitas.onclick = () => updateTipoFilter('receitas', app);
+        }
+        if (filtroDespesas) {
+            filtroDespesas.onclick = () => updateTipoFilter('despesas', app);
+        }
+        if (filtroAmbos) {
+            filtroAmbos.onclick = () => updateTipoFilter('ambos', app);
+        }
+
         // Filtros de data
-        app.config.dom.dataInicioFilter.onchange = () => {
-            app.activeFilters.dataInicio = app.config.dom.dataInicioFilter.value;
-            app.updateDashboard();
-        };
+        const dataInicioFilter = document.getElementById('data-inicio-filter');
+        const dataFimFilter = document.getElementById('data-fim-filter');
         
-        app.config.dom.dataFimFilter.onchange = () => {
-            app.activeFilters.dataFim = app.config.dom.dataFimFilter.value;
-            app.updateDashboard();
-        };
+        if (dataInicioFilter) {
+            dataInicioFilter.addEventListener('change', () => {
+                app.activeFilters.dataInicio = dataInicioFilter.value;
+                app.updateDashboard();
+            });
+        }
+        
+        if (dataFimFilter) {
+            dataFimFilter.addEventListener('change', () => {
+                app.activeFilters.dataFim = dataFimFilter.value;
+                app.updateDashboard();
+            });
+        }
     },
     
+    // Função para filtrar dados (simples como Power BI)
     getFilteredData: function(rawData, filters) {
         let filteredData = [...rawData];
         
-        // Filtro por tipo
-        if (filters.tipo !== 'ambos') {
-            const tipoMap = {
-                'receitas': 'receita',
-                'despesas': 'despesa'
-            };
-            filteredData = filteredData.filter(item => item.tipo === tipoMap[filters.tipo]);
-        }
-        
         // Filtro por empresa
-        if (filters.empresa.length > 0) {
+        if (filters.empresa && filters.empresa.length > 0) {
             filteredData = filteredData.filter(item => 
                 filters.empresa.includes(item.empresa)
             );
         }
         
         // Filtro por categoria
-        if (filters.categoria.length > 0) {
+        if (filters.categoria && filters.categoria.length > 0) {
             filteredData = filteredData.filter(item => 
                 filters.categoria.includes(item.categoria)
             );
         }
         
         // Filtro por status
-        if (filters.status.length > 0) {
+        if (filters.status && filters.status.length > 0) {
             filteredData = filteredData.filter(item => 
                 filters.status.includes(item.status)
             );
         }
-        
-        // Filtro por data
-        if (filters.dataInicio) {
+
+        // Filtro por tipo de movimento
+        if (filters.tipoMovimento && filters.tipoMovimento !== 'ambos') {
             filteredData = filteredData.filter(item => 
-                new Date(item.data) >= new Date(filters.dataInicio)
+                item.tipo === filters.tipoMovimento
             );
         }
-        
-        if (filters.dataFim) {
-            filteredData = filteredData.filter(item => 
-                new Date(item.data) <= new Date(filters.dataFim)
-            );
+
+        // Filtro por período
+        if (filters.dataInicio && filters.dataFim) {
+            const dataInicio = new Date(filters.dataInicio);
+            const dataFim = new Date(filters.dataFim);
+            
+            filteredData = filteredData.filter(item => {
+                const itemData = new Date(item.data);
+                return itemData >= dataInicio && itemData <= dataFim;
+            });
         }
         
         return filteredData;
-    }
+    },
+    
+    // Funções de renderização
+    renderFunctions: [
+        renderDRETable,
+        updateTotalRegistros
+    ]
 };
 
 // Função para atualizar filtro de tipo
@@ -136,71 +126,80 @@ function updateTipoFilter(tipo, app) {
         .forEach(btn => btn.classList.remove('active'));
     
     // Adiciona classe active ao botão clicado
-    document.getElementById(`filtro-${tipo}`).classList.add('active');
+    const targetBtn = document.getElementById(`filtro-${tipo}`);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
+    }
     
     // Atualiza o filtro
-    app.activeFilters.tipo = tipo;
+    app.activeFilters.tipoMovimento = tipo;
     app.updateDashboard();
 }
 
-// Função para renderizar a tabela DRE
+// Função para renderizar a tabela DRE - Power BI Compatible
 function renderDRETable(data, app) {
     const tbody = app.config.dom.dreTableBody;
+    if (!tbody) {
+        console.error('Elemento tbody não encontrado!');
+        return;
+    }
     
-    // Agrupar dados por categoria e mês
+    // Processar dados de forma simples (como DAX no Power BI)
     const dreData = processDataForDRE(data);
     
-    // Renderizar DRE
-    tbody.innerHTML = generateDRERows(dreData);
+    // Gerar HTML simples
+    const html = generateDRERows(dreData);
+    tbody.innerHTML = html;
     
-    // Adicionar event listeners para drill-down
+    // Adicionar controles básicos
     addDrillDownListeners();
 }
 
-// Função para processar dados para DRE
+// Função simplificada para processar dados (simula DAX)
 function processDataForDRE(data) {
     const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-    const dreStructure = {
+    
+    // Estrutura simples como no Power BI
+    const estrutura = {
         receitas: {},
         despesas: {},
         totais: {}
     };
     
-    // Inicializar estrutura
+    // Inicializar todos os meses com zero
     meses.forEach(mes => {
-        dreStructure.receitas[mes] = 0;
-        dreStructure.despesas[mes] = 0;
-        dreStructure.totais[mes] = 0;
+        estrutura.receitas[mes] = 0;
+        estrutura.despesas[mes] = 0;
+        estrutura.totais[mes] = 0;
     });
     
-    // Processar dados
-    data.forEach(item => {
-        const dataObj = new Date(item.data);
-        const mes = meses[dataObj.getMonth()];
-        const valor = parseFloat(item.valor) || 0;
-        
-        if (item.tipo === 'receita') {
-            dreStructure.receitas[mes] += valor;
-            dreStructure.totais[mes] += valor;
-        } else {
-            dreStructure.despesas[mes] -= valor;
-            dreStructure.totais[mes] -= valor;
-        }
-    });
-    
-    // Agrupar por categoria
+    // Categorias simples
     const categorias = {};
+    
+    // Processar cada item de dados
     data.forEach(item => {
-        const categoria = item.categoria;
-        const subcategoria = item.descricao;
+        if (!item.data) return; // Pular itens sem data
+        
         const dataObj = new Date(item.data);
+        if (isNaN(dataObj.getTime())) return; // Pular datas inválidas
+        
         const mes = meses[dataObj.getMonth()];
         const valor = parseFloat(item.valor) || 0;
         
+        // Somar por tipo
+        if (item.tipo === 'receita') {
+            estrutura.receitas[mes] += valor;
+            estrutura.totais[mes] += valor;
+        } else {
+            estrutura.despesas[mes] += valor;
+            estrutura.totais[mes] -= valor;
+        }
+        
+        // Agrupar por categoria
+        const categoria = item.categoria;
         if (!categorias[categoria]) {
             categorias[categoria] = {
                 tipo: item.tipo,
-                subcategorias: {},
                 totais: {}
             };
             meses.forEach(m => {
@@ -208,143 +207,100 @@ function processDataForDRE(data) {
             });
         }
         
-        if (!categorias[categoria].subcategorias[subcategoria]) {
-            categorias[categoria].subcategorias[subcategoria] = {};
-            meses.forEach(m => {
-                categorias[categoria].subcategorias[subcategoria][m] = 0;
-            });
-        }
-        
-        if (item.tipo === 'receita') {
-            categorias[categoria].subcategorias[subcategoria][mes] += valor;
-            categorias[categoria].totais[mes] += valor;
-        } else {
-            categorias[categoria].subcategorias[subcategoria][mes] -= valor;
-            categorias[categoria].totais[mes] -= valor;
-        }
+        categorias[categoria].totais[mes] += valor;
     });
     
     return {
-        estrutura: dreStructure,
+        estrutura: estrutura,
         categorias: categorias,
         meses: meses
     };
 }
 
-// Função para gerar linhas da DRE
+// Função simplificada para gerar linhas (simula visual do Power BI)
 function generateDRERows(dreData) {
     const { estrutura, categorias, meses } = dreData;
     let html = '';
     
-    // Cabeçalho da DRE
-    html += generateDREHeader(estrutura, meses);
-    
-    // Receitas
-    html += generateDRESection('RECEITAS', estrutura.receitas, meses, 'receita');
-    
-    // Despesas por categoria
-    html += generateDRECategories(categorias, meses);
-    
-    // Resultado líquido
-    html += generateDREResult(estrutura.totais, meses);
-    
-    return html;
-}
-
-// Função para gerar cabeçalho da DRE
-function generateDREHeader(estrutura, meses) {
+    // Totais simples
     const totalReceitas = meses.reduce((sum, mes) => sum + estrutura.receitas[mes], 0);
-    const totalDespesas = meses.reduce((sum, mes) => sum + Math.abs(estrutura.despesas[mes]), 0);
-    const resultado = totalReceitas - totalDespesas;
+    const totalDespesas = meses.reduce((sum, mes) => sum + estrutura.despesas[mes], 0);
     
-    return `
-        <tr class="dre-header">
-            <td></td>
-            <td>ANÁLISE DE FLUXO DE CAIXA</td>
-            ${meses.map(mes => `<td class="text-right">${formatCurrency(estrutura.receitas[mes])}</td>`).join('')}
-            <td class="text-right font-bold">${formatCurrency(totalReceitas)}</td>
-            <td class="text-right">100%</td>
-        </tr>
-    `;
-}
-
-// Função para gerar seção de receitas
-function generateDRESection(titulo, dados, meses, tipo) {
-    const total = meses.reduce((sum, mes) => sum + dados[mes], 0);
-    const cssClass = tipo === 'receita' ? 'valor-positivo' : 'valor-negativo';
-    
-    return `
-        <tr class="dre-subheader">
-            <td></td>
-            <td>→ ${titulo}</td>
-            ${meses.map(mes => `<td class="text-right ${cssClass}">${formatCurrency(dados[mes])}</td>`).join('')}
-            <td class="text-right font-bold ${cssClass}">${formatCurrency(total)}</td>
-            <td class="text-right">${tipo === 'receita' ? '100%' : '-'}</td>
-        </tr>
-    `;
-}
-
-// Função para gerar categorias da DRE
-function generateDRECategories(categorias, meses) {
-    let html = '';
-    
-    Object.entries(categorias).forEach(([categoria, dados]) => {
-        const total = meses.reduce((sum, mes) => sum + dados.totais[mes], 0);
-        const cssClass = dados.tipo === 'receita' ? 'valor-positivo' : 'valor-negativo';
-        const hasSubcategorias = Object.keys(dados.subcategorias).length > 1;
-        
-        // Linha da categoria principal
+    // Seção Receitas
+    if (totalReceitas > 0) {
         html += `
-            <tr class="dre-categoria" data-categoria="${categoria}">
-                <td class="text-center">
-                    ${hasSubcategorias ? '<span class="drill-toggle" data-categoria="' + categoria + '">▶</span>' : ''}
-                </td>
-                <td>${categoria}</td>
-                ${meses.map(mes => `<td class="text-right ${cssClass}">${formatCurrency(dados.totais[mes])}</td>`).join('')}
-                <td class="text-right font-bold ${cssClass}">${formatCurrency(total)}</td>
-                <td class="text-right percentual">${formatPercentual(total)}</td>
-            </tr>
-        `;
+            <tr class="dre-subheader">
+                <td></td>
+                <td>RECEITAS</td>
+                ${meses.map(mes => `<td class="valor-positivo">${formatCurrency(estrutura.receitas[mes])}</td>`).join('')}
+                <td class="valor-positivo">${formatCurrency(totalReceitas)}</td>
+                <td>100%</td>
+            </tr>`;
         
-        // Subcategorias (inicialmente ocultas)
-        if (hasSubcategorias) {
-            Object.entries(dados.subcategorias).forEach(([subcategoria, subdados]) => {
-                const subTotal = meses.reduce((sum, mes) => sum + subdados[mes], 0);
-                const subCssClass = dados.tipo === 'receita' ? 'valor-positivo' : 'valor-negativo';
+        // Categorias de receitas
+        Object.entries(categorias).forEach(([categoria, dados]) => {
+            if (dados.tipo === 'receita') {
+                const total = meses.reduce((sum, mes) => sum + dados.totais[mes], 0);
+                const percentual = totalReceitas > 0 ? (total / totalReceitas * 100) : 0;
                 
                 html += `
-                    <tr class="drill-content dre-subcategoria" data-parent="${categoria}">
+                    <tr class="dre-categoria">
                         <td></td>
-                        <td>${subcategoria}</td>
-                        ${meses.map(mes => `<td class="text-right ${subCssClass}">${formatCurrency(subdados[mes])}</td>`).join('')}
-                        <td class="text-right ${subCssClass}">${formatCurrency(subTotal)}</td>
-                        <td class="text-right percentual">${formatPercentual(subTotal)}</td>
-                    </tr>
-                `;
-            });
-        }
-    });
+                        <td>${categoria}</td>
+                        ${meses.map(mes => `<td class="valor-positivo">${formatCurrency(dados.totais[mes])}</td>`).join('')}
+                        <td class="valor-positivo">${formatCurrency(total)}</td>
+                        <td class="percentual">${formatPercentual(percentual)}</td>
+                    </tr>`;
+            }
+        });
+    }
+    
+    // Seção Despesas
+    if (totalDespesas > 0) {
+        html += `
+            <tr class="dre-subheader">
+                <td></td>
+                <td>DESPESAS</td>
+                ${meses.map(mes => `<td class="valor-negativo">${formatCurrency(estrutura.despesas[mes])}</td>`).join('')}
+                <td class="valor-negativo">${formatCurrency(totalDespesas)}</td>
+                <td>${formatPercentual(totalDespesas / (totalReceitas + totalDespesas) * 100)}</td>
+            </tr>`;
+        
+        // Categorias de despesas
+        Object.entries(categorias).forEach(([categoria, dados]) => {
+            if (dados.tipo === 'despesa') {
+                const total = meses.reduce((sum, mes) => sum + dados.totais[mes], 0);
+                const percentual = totalDespesas > 0 ? (total / totalDespesas * 100) : 0;
+                
+                html += `
+                    <tr class="dre-categoria">
+                        <td></td>
+                        <td>${categoria}</td>
+                        ${meses.map(mes => `<td class="valor-negativo">${formatCurrency(dados.totais[mes])}</td>`).join('')}
+                        <td class="valor-negativo">${formatCurrency(total)}</td>
+                        <td class="percentual">${formatPercentual(percentual)}</td>
+                    </tr>`;
+            }
+        });
+    }
+    
+    // Resultado final
+    const totalLiquido = meses.reduce((sum, mes) => sum + estrutura.totais[mes], 0);
+    const cssClass = totalLiquido >= 0 ? 'valor-positivo' : 'valor-negativo';
+    
+    html += `
+        <tr class="dre-total">
+            <td></td>
+            <td>RESULTADO LÍQUIDO</td>
+            ${meses.map(mes => `<td class="${cssClass}">${formatCurrency(estrutura.totais[mes])}</td>`).join('')}
+            <td class="${cssClass}">${formatCurrency(totalLiquido)}</td>
+            <td class="percentual">${formatPercentual(Math.abs(totalLiquido) / (totalReceitas + totalDespesas) * 100)}</td>
+        </tr>`;
     
     return html;
 }
 
-// Função para gerar resultado líquido
-function generateDREResult(totais, meses) {
-    const total = meses.reduce((sum, mes) => sum + totais[mes], 0);
-    const cssClass = total >= 0 ? 'valor-positivo' : 'valor-negativo';
-    
-    return `
-        <tr class="dre-total">
-            <td></td>
-            <td>SALDO LÍQUIDO</td>
-            ${meses.map(mes => `<td class="text-right font-bold ${cssClass}">${formatCurrency(totais[mes])}</td>`).join('')}
-            <td class="text-right font-bold ${cssClass}">${formatCurrency(total)}</td>
-            <td class="text-right">${formatPercentual(total)}</td>
-        </tr>
-    `;
-}
-
-// Função para adicionar event listeners de drill-down
+// Controles simples de drill-down (Power BI básico)
 function addDrillDownListeners() {
     document.querySelectorAll('.drill-toggle').forEach(toggle => {
         toggle.addEventListener('click', function() {
@@ -352,12 +308,10 @@ function addDrillDownListeners() {
             const subcategorias = document.querySelectorAll(`.drill-content[data-parent="${categoria}"]`);
             
             if (this.classList.contains('expanded')) {
-                // Recolher
                 this.classList.remove('expanded');
                 this.textContent = '▶';
                 subcategorias.forEach(row => row.classList.remove('show'));
             } else {
-                // Expandir
                 this.classList.add('expanded');
                 this.textContent = '▼';
                 subcategorias.forEach(row => row.classList.add('show'));
@@ -366,14 +320,7 @@ function addDrillDownListeners() {
     });
 }
 
-// Função para atualizar total de registros
-function updateTotalRegistros(data, app) {
-    if (app.config.dom.totalRegistros) {
-        app.config.dom.totalRegistros.textContent = `${data.length} registros encontrados`;
-    }
-}
-
-// Função para formatar moeda
+// Formatação simples para Power BI
 function formatCurrency(value) {
     if (value === 0) return '0';
     return new Intl.NumberFormat('pt-BR', {
@@ -382,13 +329,19 @@ function formatCurrency(value) {
     }).format(Math.abs(value));
 }
 
-// Função para formatar percentual
 function formatPercentual(value) {
     if (value === 0) return '0%';
     return new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1
-    }).format(Math.abs(value)) + '%';
+    }).format(value) + '%';
+}
+
+// Função para atualizar total de registros
+function updateTotalRegistros(data, app) {
+    if (app.config.dom.totalRegistros) {
+        app.config.dom.totalRegistros.textContent = `${data.length} registros encontrados`;
+    }
 }
 
 // Função para carregar e combinar dados
@@ -430,9 +383,6 @@ async function loadCombinedData() {
         const empresas = [...new Set(combinedData.map(item => item.empresa))].filter(Boolean);
         const categorias = [...new Set(combinedData.map(item => item.categoria))].filter(Boolean);
         
-        // Debug: verificar empresas carregadas
-        console.log('Empresas carregadas:', empresas);
-        
         // Atualizar configuração
         dreConfig.customSelects[0].options = empresas;
         dreConfig.customSelects[1].options = categorias;
@@ -446,7 +396,20 @@ async function loadCombinedData() {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
-    const data = await loadCombinedData();
-    const app = new DashboardApp(dreConfig);
-    app.init(data);
+    try {
+        const data = await loadCombinedData();
+        console.log('Dados carregados:', data.length, 'registros');
+        
+        if (data.length === 0) {
+            console.warn('Nenhum dado foi carregado');
+            document.getElementById('dre-table-body').innerHTML = '<tr><td colspan="15" class="text-center py-8 text-gray-500">Nenhum dado encontrado</td></tr>';
+            return;
+        }
+        
+        const app = new DashboardApp(dreConfig);
+        app.init(data);
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        document.getElementById('dre-table-body').innerHTML = '<tr><td colspan="15" class="text-center py-8 text-red-500">Erro ao carregar dados</td></tr>';
+    }
 }); 

@@ -60,6 +60,21 @@ class DashboardApp {
         // Limpa campos de busca específicos se eles existirem no DOM
         if (this.config.dom.fornecedorSearch) this.config.dom.fornecedorSearch.value = '';
         if (this.config.dom.customerSearchFilter) this.config.dom.customerSearchFilter.value = '';
+        
+        // Limpa filtros de data
+        const dataInicioFilter = document.getElementById('data-inicio-filter');
+        const dataFimFilter = document.getElementById('data-fim-filter');
+        if (dataInicioFilter) dataInicioFilter.value = this.config.initialFilters.dataInicio || '2025-01-01';
+        if (dataFimFilter) dataFimFilter.value = this.config.initialFilters.dataFim || '2025-12-31';
+        
+        // Remove classes active dos botões de filtro
+        document.querySelectorAll('.filter-btn-receitas, .filter-btn-despesas, .filter-btn-ambos')
+            .forEach(btn => btn.classList.remove('active'));
+        
+        // Adiciona classe active ao botão "Ambos"
+        const filtroAmbos = document.getElementById('filtro-ambos');
+        if (filtroAmbos) filtroAmbos.classList.add('active');
+        
         this.currentPage = 1;
         this.updateDashboard();
     }
