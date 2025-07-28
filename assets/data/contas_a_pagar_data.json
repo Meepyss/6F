@@ -8,7 +8,7 @@
         "dataVencimento": "2025-07-20",
         "valorSaldo": 15000.0,
         "grupoNatureza": "Compras",
-        "naturezaOperacao": "Matéria Prima",
+        "naturezaOperacao": "Mat\u00c3\u00a9ria Prima",
         "situacao": "Em Carteira",
         "empresa": "6F",
         "diasParaVencer": 16
@@ -106,7 +106,7 @@
         "dataVencimento": "2025-06-19",
         "valorSaldo": 21858.42,
         "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Matéria Prima",
+        "naturezaOperacao": "Mat\u00c3\u00a9ria Prima",
         "situacao": "Em Carteira",
         "empresa": "6F",
         "diasParaVencer": -15
@@ -120,7 +120,7 @@
         "dataVencimento": "2025-05-21",
         "valorSaldo": 5397.11,
         "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Matéria Prima",
+        "naturezaOperacao": "Mat\u00c3\u00a9ria Prima",
         "situacao": "Em Carteira",
         "empresa": "8F",
         "diasParaVencer": -44
@@ -134,24 +134,10 @@
         "dataVencimento": "2025-06-20",
         "valorSaldo": 20054.19,
         "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Matéria Prima",
+        "naturezaOperacao": "Mat\u00c3\u00a9ria Prima",
         "situacao": "Vinculado",
         "empresa": "PEQUETITA",
         "diasParaVencer": -14
-    },
-    {
-        "id": 11,
-        "fornecedor": "Pioneer Solutions 11",
-        "documento": "CN-31410",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-15",
-        "dataVencimento": "2025-06-06",
-        "valorSaldo": 36169.0,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "ICMS",
-        "situacao": "Em Carteira",
-        "empresa": "7F",
-        "diasParaVencer": -28
     },
     {
         "id": 12,
@@ -190,52 +176,10 @@
         "dataVencimento": "2025-08-11",
         "valorSaldo": 45606.21,
         "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Matéria Prima",
+        "naturezaOperacao": "Mat\u00c3\u00a9ria Prima",
         "situacao": "Remessa Simples",
         "empresa": "PEQUETITA",
         "diasParaVencer": 38
-    },
-    {
-        "id": 15,
-        "fornecedor": "Nexus Imports 15",
-        "documento": "SS-56058",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-25",
-        "dataVencimento": "2025-07-11",
-        "valorSaldo": 20186.92,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "ICMS",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": 7
-    },
-    {
-        "id": 16,
-        "fornecedor": "Core Systems 16",
-        "documento": "PO-98565",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-08",
-        "dataVencimento": "2025-05-11",
-        "valorSaldo": 28749.31,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Consultoria",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": -54
-    },
-    {
-        "id": 17,
-        "fornecedor": "Pioneer Solutions 17",
-        "documento": "QS-64980",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-21",
-        "dataVencimento": "2025-06-07",
-        "valorSaldo": 44628.46,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": -27
     },
     {
         "id": 18,
@@ -252,20 +196,6 @@
         "diasParaVencer": -18
     },
     {
-        "id": 19,
-        "fornecedor": "Pioneer Solutions 19",
-        "documento": "QS-16328",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-07-01",
-        "dataVencimento": "2025-08-11",
-        "valorSaldo": 1169.31,
-        "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Fretes",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": 38
-    },
-    {
         "id": 20,
         "fornecedor": "Nexus Imports 20",
         "documento": "FA-44583",
@@ -274,7 +204,7 @@
         "dataVencimento": "2025-05-23",
         "valorSaldo": 9794.12,
         "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Remessa Simples",
         "empresa": "PEQUETITA",
         "diasParaVencer": -42
@@ -288,7 +218,7 @@
         "dataVencimento": "2025-07-24",
         "valorSaldo": 19022.44,
         "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Vinculado",
         "empresa": "8F",
         "diasParaVencer": 20
@@ -350,48 +280,6 @@
         "diasParaVencer": -29
     },
     {
-        "id": 26,
-        "fornecedor": "Momentum Goods 26",
-        "documento": "FR-23041",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-02",
-        "dataVencimento": "2025-06-10",
-        "valorSaldo": 8255.02,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Fretes",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": -24
-    },
-    {
-        "id": 27,
-        "fornecedor": "Infinity Components 27",
-        "documento": "CN-81053",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-04-10",
-        "dataVencimento": "2025-06-03",
-        "valorSaldo": 23391.72,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Fretes",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": -31
-    },
-    {
-        "id": 28,
-        "fornecedor": "Infinity Components 28",
-        "documento": "CN-65141",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-06-07",
-        "dataVencimento": "2025-07-25",
-        "valorSaldo": 18451.62,
-        "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Marketing",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": 21
-    },
-    {
         "id": 29,
         "fornecedor": "Nexus Imports 29",
         "documento": "FA-95946",
@@ -418,34 +306,6 @@
         "situacao": "Em Carteira",
         "empresa": "PEQUETITA",
         "diasParaVencer": -51
-    },
-    {
-        "id": 31,
-        "fornecedor": "Pioneer Solutions 31",
-        "documento": "FA-50156",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-06-26",
-        "dataVencimento": "2025-07-21",
-        "valorSaldo": 11538.99,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": 17
-    },
-    {
-        "id": 32,
-        "fornecedor": "Crescent Corp 32",
-        "documento": "FR-75378",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-04-13",
-        "dataVencimento": "2025-05-24",
-        "valorSaldo": 1092.49,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Consultoria",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": -41
     },
     {
         "id": 33,
@@ -490,48 +350,6 @@
         "diasParaVencer": -33
     },
     {
-        "id": 36,
-        "fornecedor": "TerraDynamics 36",
-        "documento": "SS-56198",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-06-17",
-        "dataVencimento": "2025-07-07",
-        "valorSaldo": 1877.54,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Marketing",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": 3
-    },
-    {
-        "id": 37,
-        "fornecedor": "Infinity Components 37",
-        "documento": "FA-26055",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-30",
-        "dataVencimento": "2025-07-16",
-        "valorSaldo": 2379.07,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Matéria Prima",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": 12
-    },
-    {
-        "id": 38,
-        "fornecedor": "Echo Innovations 38",
-        "documento": "CN-65889",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-06-09",
-        "dataVencimento": "2025-08-07",
-        "valorSaldo": 3331.15,
-        "grupoNatureza": "Impostos",
-        "naturezaOperacao": "ICMS",
-        "situacao": "Em Carteira",
-        "empresa": "7F",
-        "diasParaVencer": 34
-    },
-    {
         "id": 39,
         "fornecedor": "Quantum Solutions 39",
         "documento": "NI-33582",
@@ -554,7 +372,7 @@
         "dataVencimento": "2025-07-14",
         "valorSaldo": 2658.87,
         "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Em Carteira",
         "empresa": "PEQUETITA",
         "diasParaVencer": 10
@@ -596,7 +414,7 @@
         "dataVencimento": "2025-08-19",
         "valorSaldo": 31933.36,
         "grupoNatureza": "Compras",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Remessa Simples",
         "empresa": "PEQUETITA",
         "diasParaVencer": 46
@@ -614,20 +432,6 @@
         "situacao": "Remessa Simples",
         "empresa": "PEQUETITA",
         "diasParaVencer": -17
-    },
-    {
-        "id": 45,
-        "fornecedor": "Global Tech Inc. 45",
-        "documento": "NI-45072",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-04-13",
-        "dataVencimento": "2025-05-31",
-        "valorSaldo": 49897.93,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Fretes",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": -34
     },
     {
         "id": 46,
@@ -686,20 +490,6 @@
         "diasParaVencer": -69
     },
     {
-        "id": 50,
-        "fornecedor": "Core Systems 50",
-        "documento": "INV-26418",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-05-28",
-        "dataVencimento": "2025-07-24",
-        "valorSaldo": 1214.12,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Insumos",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": 20
-    },
-    {
         "id": 51,
         "fornecedor": "Nova Energy 51",
         "documento": "CN-70796",
@@ -750,7 +540,7 @@
         "dataVencimento": "2025-06-03",
         "valorSaldo": 11767.4,
         "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Vinculado",
         "empresa": "6F",
         "diasParaVencer": -31
@@ -770,20 +560,6 @@
         "diasParaVencer": -30
     },
     {
-        "id": 56,
-        "fornecedor": "Nexus Imports 56",
-        "documento": "CN-83364",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-07",
-        "dataVencimento": "2025-04-30",
-        "valorSaldo": 6813.53,
-        "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Energia",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": -65
-    },
-    {
         "id": 57,
         "fornecedor": "Vertex Ventures 57",
         "documento": "PO-78497",
@@ -792,7 +568,7 @@
         "dataVencimento": "2025-06-22",
         "valorSaldo": 41918.83,
         "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Matéria Prima",
+        "naturezaOperacao": "Mat\u00c3\u00a9ria Prima",
         "situacao": "Descontado",
         "empresa": "6F",
         "diasParaVencer": -12
@@ -854,20 +630,6 @@
         "diasParaVencer": 18
     },
     {
-        "id": 62,
-        "fornecedor": "Stellar Services 62",
-        "documento": "INV-76156",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-14",
-        "dataVencimento": "2025-05-06",
-        "valorSaldo": 20198.39,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "ICMS",
-        "situacao": "Em Carteira",
-        "empresa": "7F",
-        "diasParaVencer": -59
-    },
-    {
         "id": 63,
         "fornecedor": "Infinity Components 63",
         "documento": "CN-15312",
@@ -890,7 +652,7 @@
         "dataVencimento": "2025-08-20",
         "valorSaldo": 12305.05,
         "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Vinculado",
         "empresa": "PEQUETITA",
         "diasParaVencer": 47
@@ -924,20 +686,6 @@
         "diasParaVencer": 1
     },
     {
-        "id": 67,
-        "fornecedor": "Quantum Solutions 67",
-        "documento": "INV-27885",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-08",
-        "dataVencimento": "2025-05-17",
-        "valorSaldo": 25837.37,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": -48
-    },
-    {
         "id": 68,
         "fornecedor": "TerraDynamics 68",
         "documento": "CN-66235",
@@ -964,20 +712,6 @@
         "situacao": "Descontado",
         "empresa": "PEQUETITA",
         "diasParaVencer": 8
-    },
-    {
-        "id": 70,
-        "fornecedor": "Nova Energy 70",
-        "documento": "RC-14737",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-06-13",
-        "dataVencimento": "2025-08-08",
-        "valorSaldo": 15928.12,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Marketing",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": 35
     },
     {
         "id": 71,
@@ -1022,20 +756,6 @@
         "diasParaVencer": -64
     },
     {
-        "id": 74,
-        "fornecedor": "Quantum Solutions 74",
-        "documento": "FA-45080",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-04-07",
-        "dataVencimento": "2025-04-30",
-        "valorSaldo": 47321.14,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": -65
-    },
-    {
         "id": 75,
         "fornecedor": "Apex Logistics 75",
         "documento": "RC-52806",
@@ -1062,20 +782,6 @@
         "situacao": "Remessa Simples",
         "empresa": "6F",
         "diasParaVencer": -5
-    },
-    {
-        "id": 77,
-        "fornecedor": "Apex Logistics 77",
-        "documento": "INV-14637",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-20",
-        "dataVencimento": "2025-05-19",
-        "valorSaldo": 23482.24,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Consultoria",
-        "situacao": "Em Carteira",
-        "empresa": "7F",
-        "diasParaVencer": -46
     },
     {
         "id": 78,
@@ -1134,34 +840,6 @@
         "diasParaVencer": -17
     },
     {
-        "id": 82,
-        "fornecedor": "Summit Equipment 82",
-        "documento": "NI-52507",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-06-06",
-        "dataVencimento": "2025-07-17",
-        "valorSaldo": 13379.18,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": 13
-    },
-    {
-        "id": 83,
-        "fornecedor": "Pioneer Solutions 83",
-        "documento": "RC-94812",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-17",
-        "dataVencimento": "2025-07-06",
-        "valorSaldo": 29462.69,
-        "grupoNatureza": "Impostos",
-        "naturezaOperacao": "Marketing",
-        "situacao": "Em Carteira",
-        "empresa": "7F",
-        "diasParaVencer": 2
-    },
-    {
         "id": 84,
         "fornecedor": "Core Systems 84",
         "documento": "PO-48203",
@@ -1188,34 +866,6 @@
         "situacao": "Descontado",
         "empresa": "8F",
         "diasParaVencer": 1
-    },
-    {
-        "id": 86,
-        "fornecedor": "Echo Innovations 86",
-        "documento": "FR-59931",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-20",
-        "dataVencimento": "2025-05-06",
-        "valorSaldo": 27710.28,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Fretes",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": -59
-    },
-    {
-        "id": 87,
-        "fornecedor": "Summit Equipment 87",
-        "documento": "SS-58708",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-29",
-        "dataVencimento": "2025-05-22",
-        "valorSaldo": 17942.84,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Energia",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": -43
     },
     {
         "id": 88,
@@ -1260,20 +910,6 @@
         "diasParaVencer": -9
     },
     {
-        "id": 91,
-        "fornecedor": "Echo Innovations 91",
-        "documento": "CN-51890",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-24",
-        "dataVencimento": "2025-06-12",
-        "valorSaldo": 17699.39,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "ICMS",
-        "situacao": "Em Carteira",
-        "empresa": "7F",
-        "diasParaVencer": -22
-    },
-    {
         "id": 92,
         "fornecedor": "Radiant Resources 92",
         "documento": "FR-10440",
@@ -1316,34 +952,6 @@
         "diasParaVencer": -55
     },
     {
-        "id": 95,
-        "fornecedor": "Quantum Solutions 95",
-        "documento": "RC-96929",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-26",
-        "dataVencimento": "2025-05-11",
-        "valorSaldo": 41778.82,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Marketing",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": -54
-    },
-    {
-        "id": 96,
-        "fornecedor": "Skyline Traders 96",
-        "documento": "CN-19399",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-04-23",
-        "dataVencimento": "2025-05-10",
-        "valorSaldo": 40276.68,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Matéria Prima",
-        "situacao": "Remessa Simples",
-        "empresa": "7F",
-        "diasParaVencer": -55
-    },
-    {
         "id": 97,
         "fornecedor": "Vertex Ventures 97",
         "documento": "QS-80649",
@@ -1372,20 +980,6 @@
         "diasParaVencer": -20
     },
     {
-        "id": 99,
-        "fornecedor": "Pioneer Solutions 99",
-        "documento": "RC-90758",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-06-14",
-        "dataVencimento": "2025-08-07",
-        "valorSaldo": 25699.37,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Matéria Prima",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": 34
-    },
-    {
         "id": 100,
         "fornecedor": "Momentum Goods 100",
         "documento": "BL-20989",
@@ -1408,65 +1002,9 @@
         "dataVencimento": "2025-07-03",
         "valorSaldo": 41611.99,
         "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Serviços Terceirizados",
+        "naturezaOperacao": "Servi\u00c3\u00a7os Terceirizados",
         "situacao": "Descontado",
         "empresa": "PEQUETITA",
         "diasParaVencer": -1
-    },
-    {
-        "id": 102,
-        "fornecedor": "Apex Logistics 102",
-        "documento": "BL-81680",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-06-06",
-        "dataVencimento": "2025-07-01",
-        "valorSaldo": 49937.87,
-        "grupoNatureza": "Compras",
-        "naturezaOperacao": "Energia",
-        "situacao": "Descontado",
-        "empresa": "7F",
-        "diasParaVencer": -3
-    },
-    {
-        "id": 103,
-        "fornecedor": "Nova Energy 103",
-        "documento": "QS-48096",
-        "prefixo": "PAG",
-        "dataEmissao": "2025-05-31",
-        "dataVencimento": "2025-07-19",
-        "valorSaldo": 30073.9,
-        "grupoNatureza": "Outras Despesas",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": 15
-    },
-    {
-        "id": 104,
-        "fornecedor": "Crescent Corp 104",
-        "documento": "FA-62344",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-05-20",
-        "dataVencimento": "2025-06-15",
-        "valorSaldo": 5472.01,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Serviços Terceirizados",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": -19
-    },
-    {
-        "id": 105,
-        "fornecedor": "Core Systems 105",
-        "documento": "QS-34507",
-        "prefixo": "PROV",
-        "dataEmissao": "2025-05-30",
-        "dataVencimento": "2025-07-05",
-        "valorSaldo": 4500.76,
-        "grupoNatureza": "Despesas Comerciais",
-        "naturezaOperacao": "Energia",
-        "situacao": "Vinculado",
-        "empresa": "7F",
-        "diasParaVencer": 1
     }
 ]
