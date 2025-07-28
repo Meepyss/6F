@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Fluxo Detalhado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="text-gray-700 bg-gray-50">
+    <div class="container mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-4">Teste do Fluxo Detalhado</h1>
+        
+        <div class="bg-white rounded-lg p-4 mb-4">
+            <h2 class="text-lg font-semibold mb-2">Status do Sistema</h2>
+            <div id="status-container">
+                <p>Carregando...</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg p-4">
+            <h2 class="text-lg font-semibold mb-2">Logs de Debug</h2>
+            <div id="debug-container" class="bg-gray-100 p-2 rounded text-sm font-mono max-h-96 overflow-y-auto">
+                <p>Iniciando teste...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para adicionar logs
+        function addLog(message) {
+            const container = document.getElementById('debug-container');
+            const timestamp = new Date().toLocaleTimeString();
+            container.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Função para atualizar status
+        function updateStatus(message, isError = false) {
+            const container = document.getElementById('status-container');
+            const className = isError ? 'text-red-600' : 'text-green-600';
+            container.innerHTML = `<p class="${className}">${message}</p>`;
+        }
+
+        // Teste do sistema
+        document.addEventListener('DOMContentLoaded', async () => {
+            addLog('DOM carregado, iniciando testes...');
+            
+            try {
+                // Teste 1: Verificar se o arquivo JavaScript carrega
+                addLog('Teste 1: Verificando carregamento do JavaScript...');
+                
+                // Aguardar um pouco para o script carregar
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                if (typeof window.fluxoDetalhado !== 'undefined') {
+                    addLog('✓ FluxoDetalhado carregado com sucesso');
+                    updateStatus('Sistema carregado com sucesso');
+                } else {
+                    addLog('✗ FluxoDetalhado não encontrado');
+                    updateStatus('Erro: FluxoDetalhado não carregado', true);
+                    return;
+                }
+
+                // Teste 2: Verificar dados
+                addLog('Teste 2: Verificando dados...');
+                if (window.fluxoDetalhado.dados && window.fluxoDetalhado.dados.length > 0) {
+                    addLog(`✓ Dados carregados: ${window.fluxoDetalhado.dados.length} registros`);
+                } else {
+                    addLog('✗ Nenhum dado encontrado');
+                }
+
+                // Teste 3: Verificar filtros
+                addLog('Teste 3: Verificando filtros...');
+                if (window.fluxoDetalhado.filtros) {
+                    addLog(`✓ Filtros configurados: ${Object.keys(window.fluxoDetalhado.filtros).length} tipos`);
+                } else {
+                    addLog('✗ Filtros não configurados');
+                }
+
+                // Teste 4: Verificar elementos DOM
+                addLog('Teste 4: Verificando elementos DOM...');
+                const elementosNecessarios = [
+                    'empresa-filter-container',
+                    'categoria-filter-container', 
+                    'status-filter-container',
+                    'detailed-table-body',
+                    'pagination-controls',
+                    'total-registros',
+                    'active-filters-container'
+                ];
+
+                const elementosFaltando = elementosNecessarios.filter(id => !document.getElementById(id));
+                if (elementosFaltando.length === 0) {
+                    addLog('✓ Todos os elementos DOM encontrados');
+                } else {
+                    addLog(`✗ Elementos faltando: ${elementosFaltando.join(', ')}`);
+                }
+
+                addLog('Testes concluídos!');
+
+            } catch (error) {
+                addLog(`✗ Erro durante os testes: ${error.message}`);
+                updateStatus(`Erro: ${error.message}`, true);
+            }
+        });
+    </script>
+
+    <!-- Carregar o script do fluxo detalhado -->
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/fluxo_detalhado.js"></script>
+</body>
+</html> 
